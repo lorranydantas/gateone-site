@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Análises — GATEONE</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="dashboard.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
+    <div class="right">
+      <span class="org-name">Olá, <b id="orgNome">…</b></span>
+      <a class="btn btn-outline btn-sm" href="dashboard.html">Voltar</a>
+      <button class="btn btn-outline btn-sm" onclick="window.sair()">Sair</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1 class="section-title">Análises</h1>
+    <p class="section-sub">Histórico completo das análises de crédito.</p>
+
+    <div id="msgGlobal" class="msg"></div>
+
+    <div class="filters">
+      <div class="field">
+        <label for="filtroPerfil">Perfil</label>
+        <select id="filtroPerfil">
+          <option value="">Todos</option>
+          <option value="ALTO">Alto</option>
+          <option value="MEDIO">Médio</option>
+          <option value="BAIXO">Baixo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filtroDe">De</label>
+        <input id="filtroDe" type="date" />
+      </div>
+      <div class="field">
+        <label for="filtroAte">Até</label>
+        <input id="filtroAte" type="date" />
+      </div>
+      <button id="btnAplicar" class="btn btn-primary btn-sm">Aplicar</button>
+      <button id="btnLimpar" class="btn btn-ghost btn-sm">Limpar</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>CPF Proponente</th>
+            <th>Score</th>
+            <th>Perfil</th>
+            <th>Status</th>
+            <th>Telefone Corretor</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script>
+    const supa = window.gateoneSupabase;
+    const tbody = document.getElementById('tbody');
+    const msg = document.getElementById('msgGlobal');
+    let incorporadoraAtual = null;
+
+    function aviso(t, tipo='err'){ msg.textContent = t; msg.className = `msg ${tipo} show`; }
+    function badgePerfil(p){
+      const map = { ALTO:'alto', MEDIO:'medio', BAIXO:'baixo' };
+      const label = { ALTO:'Alto', MEDIO:'Médio', BAIXO:'Baixo' };
+      return `<span class="badge ${map[p] || 'medio'}">${label[p] || p}</span>`;
+    }
+    function badgeAprovado(a){
+      return a
+        ? '<span class="badge aprovado">Aprovado</span>'
+        : '<span class="badge reprovado">Reprovado</span>';
+    }
+
+    async function carregar() {
+      if (!incorporadoraAtual) return;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>`;
+
+      let q = supa.from('analises')
+        .select('id, created_at, cpf_proponente1, cpf_proponente2, score, perfil, aprovado, telefone_corretor')
+        .eq('incorporadora_id', incorporadoraAtual.id)
+        .order('created_at', { ascending: false });
+
+      const fp = document.getElementById('filtroPerfil').value;
+      const de = document.getElementById('filtroDe').value;
+      const ate = document.getElementById('filtroAte').value;
+      if (fp) q = q.eq('perfil', fp);
+      if (de) q = q.gte('created_at', `${de}T00:00:00`);
+      if (ate) q = q.lte('created_at', `${ate}T23:59:59`);
+
+      const { data, error } = await q;
+      if (error) { tbody.innerHTML = `<tr><td colspan="6">Erro: ${error.message}</td></tr>`; return; }
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><h3>Nenhuma análise encontrada</h3>Ajuste os filtros ou aguarde novas análises.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td>${window.formatDataBR(r.created_at)}</td>
+          <td>${window.mascararCPF(r.cpf_proponente1)}${r.cpf_proponente2 ? '<br><small style="color:var(--muted)">+ '+window.mascararCPF(r.cpf_proponente2)+'</small>' : ''}</td>
+          <td><b>${r.score ?? '—'}</b></td>
+          <td>${badgePerfil(r.perfil)}</td>
+          <td>${badgeAprovado(r.aprovado)}</td>
+          <td style="color:var(--muted)">${r.telefone_corretor || '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    (async () => {
+      const user = await window.exigirLogin();
+      if (!user) return;
+      incorporadoraAtual = await window.buscarIncorporadoraDoUsuario(user);
+      if (!incorporadoraAtual) {
+        document.getElementById('orgNome').textContent = user.email;
+        aviso('Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
+        tbody.innerHTML = '';
+        return;
+      }
+      document.getElementById('orgNome').textContent = incorporadoraAtual.nome;
+      carregar();
+    })();
+
+    document.getElementById('btnAplicar').addEventListener('click', carregar);
+    document.getElementById('btnLimpar').addEventListener('click', () => {
+      document.getElementById('filtroPerfil').value = '';
+      document.getElementById('filtroDe').value = '';
+      document.getElementById('filtroAte').value = '';
+      carregar();
+    });
+  </script>
+</body>
+</html>

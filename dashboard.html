@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — GATEONE</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="dashboard.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
+    <div class="right">
+      <span class="org-name">Olá, <b id="orgNome">…</b></span>
+      <button class="btn btn-outline btn-sm" onclick="window.sair()">Sair</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1 class="section-title">Visão geral</h1>
+    <p class="section-sub">Resumo das análises de crédito da sua incorporadora.</p>
+
+    <div id="msgGlobal" class="msg"></div>
+
+    <section class="metrics">
+      <div class="card metric"><div class="label">Total de análises</div><div class="value blue" id="mTotal">—</div></div>
+      <div class="card metric"><div class="label">Aprovados</div><div class="value green" id="mAprovados">—</div></div>
+      <div class="card metric"><div class="label">Reprovados</div><div class="value red" id="mReprovados">—</div></div>
+      <div class="card metric"><div class="label">Taxa de aprovação</div><div class="value orange" id="mTaxa">—</div></div>
+    </section>
+
+    <section class="card">
+      <h2 style="font-size:1.3rem;margin-bottom:14px">Distribuição por perfil de risco</h2>
+      <div class="chart" id="chart">
+        <div class="chart-row"><div class="name">Alto</div><div class="bar-wrap"><div class="bar alto" id="barAlto" style="width:0%"></div></div><div class="count" id="cntAlto">0</div></div>
+        <div class="chart-row"><div class="name">Médio</div><div class="bar-wrap"><div class="bar medio" id="barMedio" style="width:0%"></div></div><div class="count" id="cntMedio">0</div></div>
+        <div class="chart-row"><div class="name">Baixo</div><div class="bar-wrap"><div class="bar baixo" id="barBaixo" style="width:0%"></div></div><div class="count" id="cntBaixo">0</div></div>
+      </div>
+    </section>
+
+    <nav class="nav-actions">
+      <a class="btn btn-primary" href="analises.html">Ver análises &rarr;</a>
+      <a class="btn btn-orange" href="politica.html">Configurar política de crédito</a>
+    </nav>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script>
+    const supa = window.gateoneSupabase;
+    const msg = document.getElementById('msgGlobal');
+    function aviso(texto, tipo='err'){ msg.textContent = texto; msg.className = `msg ${tipo} show`; }
+
+    (async () => {
+      const user = await window.exigirLogin();
+      if (!user) return;
+
+      const incorporadora = await window.buscarIncorporadoraDoUsuario(user);
+      if (!incorporadora) {
+        document.getElementById('orgNome').textContent = user.email;
+        aviso('Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
+        return;
+      }
+      document.getElementById('orgNome').textContent = incorporadora.nome;
+
+      const { data: analises, error } = await supa
+        .from('analises')
+        .select('id, perfil, aprovado, score')
+        .eq('incorporadora_id', incorporadora.id);
+
+      if (error) { aviso('Erro carregando análises: ' + error.message); return; }
+
+      const total = analises.length;
+      const aprovados = analises.filter(a => a.aprovado).length;
+      const reprovados = total - aprovados;
+      const taxa = total > 0 ? (aprovados/total*100).toFixed(1) : '0';
+
+      document.getElementById('mTotal').textContent = total;
+      document.getElementById('mAprovados').textContent = aprovados;
+      document.getElementById('mReprovados').textContent = reprovados;
+      document.getElementById('mTaxa').textContent = `${taxa}%`;
+
+      const cAlto = analises.filter(a => a.perfil === 'ALTO').length;
+      const cMedio = analises.filter(a => a.perfil === 'MEDIO').length;
+      const cBaixo = analises.filter(a => a.perfil === 'BAIXO').length;
+      const maxV = Math.max(cAlto, cMedio, cBaixo, 1);
+      document.getElementById('cntAlto').textContent = cAlto;
+      document.getElementById('cntMedio').textContent = cMedio;
+      document.getElementById('cntBaixo').textContent = cBaixo;
+      document.getElementById('barAlto').style.width = `${(cAlto/maxV)*100}%`;
+      document.getElementById('barMedio').style.width = `${(cMedio/maxV)*100}%`;
+      document.getElementById('barBaixo').style.width = `${(cBaixo/maxV)*100}%`;
+    })();
+  </script>
+</body>
+</html>
