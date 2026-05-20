@@ -7,89 +7,88 @@
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
-  <header class="topbar">
-    <a class="logo" href="dashboard.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
-    <div class="right">
-      <span class="org-name">Olá, <b id="orgNome">…</b></span>
-      <a class="btn btn-outline btn-sm" href="dashboard.html">Voltar</a>
-      <button class="btn btn-outline btn-sm" onclick="window.sair()">Sair</button>
-    </div>
-  </header>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
 
-  <main class="container">
-    <h1 class="section-title">Análises</h1>
-    <p class="section-sub">Histórico completo das análises de crédito.</p>
-
-    <div id="msgGlobal" class="msg"></div>
-
-    <div class="filters">
-      <div class="field">
-        <label for="filtroPerfil">Perfil</label>
-        <select id="filtroPerfil">
-          <option value="">Todos</option>
-          <option value="ALTO">Alto</option>
-          <option value="MEDIO">Médio</option>
-          <option value="BAIXO">Baixo</option>
-        </select>
+    <main class="main">
+      <div class="main-head">
+        <h1>Análises</h1>
+        <p>Histórico completo das análises de crédito da sua incorporadora.</p>
       </div>
-      <div class="field">
-        <label for="filtroDe">De</label>
-        <input id="filtroDe" type="date" />
-      </div>
-      <div class="field">
-        <label for="filtroAte">Até</label>
-        <input id="filtroAte" type="date" />
-      </div>
-      <button id="btnAplicar" class="btn btn-primary btn-sm">Aplicar</button>
-      <button id="btnLimpar" class="btn btn-ghost btn-sm">Limpar</button>
-    </div>
 
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>CPF Proponente</th>
-            <th>Score</th>
-            <th>Perfil</th>
-            <th>Status</th>
-            <th>Telefone Corretor</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </main>
+      <div id="msgGlobal" class="msg"></div>
+
+      <div class="filters card" style="padding:18px 22px;margin-bottom:18px">
+        <div class="field" style="min-width:170px">
+          <label for="filtroPerfil">Perfil</label>
+          <select id="filtroPerfil">
+            <option value="">Todos</option>
+            <option value="ALTO">Alto</option>
+            <option value="MEDIO">Médio</option>
+            <option value="BAIXO">Baixo</option>
+          </select>
+        </div>
+        <div class="field" style="min-width:170px">
+          <label for="filtroDe">De</label>
+          <input id="filtroDe" type="date" />
+        </div>
+        <div class="field" style="min-width:170px">
+          <label for="filtroAte">Até</label>
+          <input id="filtroAte" type="date" />
+        </div>
+        <div class="actions">
+          <button id="btnAplicar" class="btn btn-primary btn-sm">Aplicar filtros</button>
+          <button id="btnLimpar" class="btn btn-ghost btn-sm">Limpar</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>CPF</th>
+              <th>Score</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Telefone Corretor</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
+  <script src="sidebar.js"></script>
   <script>
+    window.renderSidebar('analises');
     const supa = window.gateoneSupabase;
     const tbody = document.getElementById('tbody');
     const msg = document.getElementById('msgGlobal');
-    let incorporadoraAtual = null;
+    let incorp = null;
+    const aviso = (t, tipo='err') => { msg.textContent = t; msg.className = `msg ${tipo} show`; };
 
-    function aviso(t, tipo='err'){ msg.textContent = t; msg.className = `msg ${tipo} show`; }
     function badgePerfil(p){
-      const map = { ALTO:'alto', MEDIO:'medio', BAIXO:'baixo' };
-      const label = { ALTO:'Alto', MEDIO:'Médio', BAIXO:'Baixo' };
-      return `<span class="badge ${map[p] || 'medio'}">${label[p] || p}</span>`;
+      const cls = ({ALTO:'alto',MEDIO:'medio',BAIXO:'baixo'})[p] || 'medio';
+      const label = ({ALTO:'Alto',MEDIO:'Médio',BAIXO:'Baixo'})[p] || p;
+      return `<span class="badge ${cls}">${label}</span>`;
     }
-    function badgeAprovado(a){
-      return a
-        ? '<span class="badge aprovado">Aprovado</span>'
-        : '<span class="badge reprovado">Reprovado</span>';
+    function badgeStatus(a){
+      return a ? '<span class="badge aprovado">Aprovado</span>' : '<span class="badge reprovado">Reprovado</span>';
     }
 
-    async function carregar() {
-      if (!incorporadoraAtual) return;
+    async function carregar(){
+      if (!incorp) return;
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>`;
 
       let q = supa.from('analises')
         .select('id, created_at, cpf_proponente1, cpf_proponente2, score, perfil, aprovado, telefone_corretor')
-        .eq('incorporadora_id', incorporadoraAtual.id)
+        .eq('incorporadora_id', incorp.id)
         .order('created_at', { ascending: false });
 
       const fp = document.getElementById('filtroPerfil').value;
@@ -107,11 +106,14 @@
       }
       tbody.innerHTML = data.map(r => `
         <tr>
-          <td>${window.formatDataBR(r.created_at)}</td>
-          <td>${window.mascararCPF(r.cpf_proponente1)}${r.cpf_proponente2 ? '<br><small style="color:var(--muted)">+ '+window.mascararCPF(r.cpf_proponente2)+'</small>' : ''}</td>
-          <td><b>${r.score ?? '—'}</b></td>
+          <td style="color:var(--muted-strong)">${window.formatDataBR(r.created_at)}</td>
+          <td>
+            ${window.mascararCPF(r.cpf_proponente1)}
+            ${r.cpf_proponente2 ? '<br><small style="color:var(--muted)">+ '+window.mascararCPF(r.cpf_proponente2)+'</small>' : ''}
+          </td>
+          <td><span class="num">${r.score ?? '—'}</span></td>
           <td>${badgePerfil(r.perfil)}</td>
-          <td>${badgeAprovado(r.aprovado)}</td>
+          <td>${badgeStatus(r.aprovado)}</td>
           <td style="color:var(--muted)">${r.telefone_corretor || '—'}</td>
         </tr>
       `).join('');
@@ -120,14 +122,13 @@
     (async () => {
       const user = await window.exigirLogin();
       if (!user) return;
-      incorporadoraAtual = await window.buscarIncorporadoraDoUsuario(user);
-      if (!incorporadoraAtual) {
-        document.getElementById('orgNome').textContent = user.email;
+      window.preencherUsuarioSidebar(user);
+      incorp = await window.buscarIncorporadoraDoUsuario(user);
+      if (!incorp) {
         aviso('Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
         tbody.innerHTML = '';
         return;
       }
-      document.getElementById('orgNome').textContent = incorporadoraAtual.nome;
       carregar();
     })();
 

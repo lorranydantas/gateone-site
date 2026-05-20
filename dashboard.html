@@ -7,65 +7,136 @@
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
-  <header class="topbar">
-    <a class="logo" href="dashboard.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
-    <div class="right">
-      <span class="org-name">Olá, <b id="orgNome">…</b></span>
-      <button class="btn btn-outline btn-sm" onclick="window.sair()">Sair</button>
-    </div>
-  </header>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
 
-  <main class="container">
-    <h1 class="section-title">Visão geral</h1>
-    <p class="section-sub">Resumo das análises de crédito da sua incorporadora.</p>
-
-    <div id="msgGlobal" class="msg"></div>
-
-    <section class="metrics">
-      <div class="card metric"><div class="label">Total de análises</div><div class="value blue" id="mTotal">—</div></div>
-      <div class="card metric"><div class="label">Aprovados</div><div class="value green" id="mAprovados">—</div></div>
-      <div class="card metric"><div class="label">Reprovados</div><div class="value red" id="mReprovados">—</div></div>
-      <div class="card metric"><div class="label">Taxa de aprovação</div><div class="value orange" id="mTaxa">—</div></div>
-    </section>
-
-    <section class="card">
-      <h2 style="font-size:1.3rem;margin-bottom:14px">Distribuição por perfil de risco</h2>
-      <div class="chart" id="chart">
-        <div class="chart-row"><div class="name">Alto</div><div class="bar-wrap"><div class="bar alto" id="barAlto" style="width:0%"></div></div><div class="count" id="cntAlto">0</div></div>
-        <div class="chart-row"><div class="name">Médio</div><div class="bar-wrap"><div class="bar medio" id="barMedio" style="width:0%"></div></div><div class="count" id="cntMedio">0</div></div>
-        <div class="chart-row"><div class="name">Baixo</div><div class="bar-wrap"><div class="bar baixo" id="barBaixo" style="width:0%"></div></div><div class="count" id="cntBaixo">0</div></div>
+    <main class="main">
+      <div class="main-head">
+        <h1>Visão Geral</h1>
+        <p>Acompanhe o pulso da sua operação de crédito.</p>
       </div>
-    </section>
 
-    <nav class="nav-actions">
-      <a class="btn btn-primary" href="analises.html">Ver análises &rarr;</a>
-      <a class="btn btn-orange" href="politica.html">Configurar política de crédito</a>
-    </nav>
-  </main>
+      <div id="msgGlobal" class="msg"></div>
+
+      <section class="metrics">
+        <div class="card metric">
+          <div class="label">Total de análises</div>
+          <div class="value" id="mTotal">—</div>
+          <div class="hint">Análises realizadas</div>
+        </div>
+        <div class="card metric">
+          <div class="label">Aprovados</div>
+          <div class="value blue" id="mAprovados">—</div>
+          <div class="hint">Viabilidade confirmada</div>
+        </div>
+        <div class="card metric">
+          <div class="label">Reprovados</div>
+          <div class="value orange" id="mReprovados">—</div>
+          <div class="hint">Aguardando ajustes</div>
+        </div>
+        <div class="card metric">
+          <div class="label">Taxa de aprovação</div>
+          <div class="value" id="mTaxa">—</div>
+          <div class="hint">Sobre o total</div>
+        </div>
+      </section>
+
+      <div class="section-grid">
+        <div class="card">
+          <h2 class="card-title">Distribuição por perfil de risco</h2>
+          <p class="card-sub">Como suas análises se distribuem entre os perfis classificados pelo motor.</p>
+          <div class="chart">
+            <div class="chart-row">
+              <span class="name">Alto</span>
+              <div class="bar-wrap"><div class="bar alto" id="barAlto" style="width:0%"></div></div>
+              <span class="count" id="cntAlto">0</span>
+            </div>
+            <div class="chart-row">
+              <span class="name">Médio</span>
+              <div class="bar-wrap"><div class="bar medio" id="barMedio" style="width:0%"></div></div>
+              <span class="count" id="cntMedio">0</span>
+            </div>
+            <div class="chart-row">
+              <span class="name">Baixo</span>
+              <div class="bar-wrap"><div class="bar baixo" id="barBaixo" style="width:0%"></div></div>
+              <span class="count" id="cntBaixo">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Ações rápidas</h2>
+          <p class="card-sub">Comece uma análise ou configure sua política.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+            <a class="btn btn-primary btn-block" href="nova-analise.html">+ Nova análise</a>
+            <a class="btn btn-orange btn-block" href="politica.html">Editar política de crédito</a>
+            <a class="btn btn-outline btn-block" href="analises.html">Ver todas as análises</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-head">
+          <div>
+            <h2>Análises recentes</h2>
+            <p>Últimas 5 análises realizadas na sua incorporadora.</p>
+          </div>
+          <a class="btn btn-outline btn-sm" href="analises.html">Ver todas &rarr;</a>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>CPF</th>
+              <th>Score</th>
+              <th>Perfil</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRecentes">
+            <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
+  <script src="sidebar.js"></script>
   <script>
+    window.renderSidebar('dashboard');
     const supa = window.gateoneSupabase;
     const msg = document.getElementById('msgGlobal');
-    function aviso(texto, tipo='err'){ msg.textContent = texto; msg.className = `msg ${tipo} show`; }
+    const tbody = document.getElementById('tbodyRecentes');
+    const aviso = (t, tipo='err') => { msg.textContent = t; msg.className = `msg ${tipo} show`; };
+
+    function badgePerfil(p){
+      const cls = ({ALTO:'alto',MEDIO:'medio',BAIXO:'baixo'})[p] || 'medio';
+      const label = ({ALTO:'Alto',MEDIO:'Médio',BAIXO:'Baixo'})[p] || p;
+      return `<span class="badge ${cls}">${label}</span>`;
+    }
+    function badgeStatus(a){
+      return a ? '<span class="badge aprovado">Aprovado</span>' : '<span class="badge reprovado">Reprovado</span>';
+    }
 
     (async () => {
       const user = await window.exigirLogin();
       if (!user) return;
+      window.preencherUsuarioSidebar(user);
 
       const incorporadora = await window.buscarIncorporadoraDoUsuario(user);
       if (!incorporadora) {
-        document.getElementById('orgNome').textContent = user.email;
         aviso('Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
+        tbody.innerHTML = '';
         return;
       }
-      document.getElementById('orgNome').textContent = incorporadora.nome;
 
       const { data: analises, error } = await supa
         .from('analises')
-        .select('id, perfil, aprovado, score')
-        .eq('incorporadora_id', incorporadora.id);
+        .select('id, created_at, cpf_proponente1, score, perfil, aprovado')
+        .eq('incorporadora_id', incorporadora.id)
+        .order('created_at', { ascending: false });
 
       if (error) { aviso('Erro carregando análises: ' + error.message); return; }
 
@@ -86,9 +157,24 @@
       document.getElementById('cntAlto').textContent = cAlto;
       document.getElementById('cntMedio').textContent = cMedio;
       document.getElementById('cntBaixo').textContent = cBaixo;
-      document.getElementById('barAlto').style.width = `${(cAlto/maxV)*100}%`;
+      document.getElementById('barAlto').style.width  = `${(cAlto/maxV)*100}%`;
       document.getElementById('barMedio').style.width = `${(cMedio/maxV)*100}%`;
       document.getElementById('barBaixo').style.width = `${(cBaixo/maxV)*100}%`;
+
+      const recentes = analises.slice(0, 5);
+      if (!recentes.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><h3>Sem análises ainda</h3>Quando o bot processar a primeira, ela aparece aqui.</div></td></tr>`;
+      } else {
+        tbody.innerHTML = recentes.map(r => `
+          <tr>
+            <td style="color:var(--muted-strong)">${window.formatDataBR(r.created_at)}</td>
+            <td>${window.mascararCPF(r.cpf_proponente1)}</td>
+            <td><span class="num">${r.score ?? '—'}</span></td>
+            <td>${badgePerfil(r.perfil)}</td>
+            <td>${badgeStatus(r.aprovado)}</td>
+          </tr>
+        `).join('');
+      }
     })();
   </script>
 </body>

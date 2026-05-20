@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova Análise — GATEONE</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="main-head">
+        <h1>Nova Análise</h1>
+        <p>Inicie uma análise de crédito direto pelo WhatsApp do GATEONE.</p>
+      </div>
+
+      <div class="na-grid">
+        <div class="na-info">
+          <h2>Fale com o <span class="blue">GATE</span><span class="orange">ONE</span> no WhatsApp</h2>
+          <p>Toda análise começa por uma conversa simples. Envie <strong>"oi"</strong> para o número abaixo e o bot guia você pelos dados do imóvel e proponentes — laudo e carta saem em minutos.</p>
+
+          <div class="phone-display">
+            <span class="pulse"></span>
+            +55 49 9113 8670
+          </div>
+
+          <div class="na-steps">
+            <div class="na-step">
+              <span class="n">1</span>
+              <div>Salve o número nos seus contatos como <em>GATEONE Bot</em>.</div>
+            </div>
+            <div class="na-step">
+              <span class="n">2</span>
+              <div>Envie a mensagem <strong>"oi"</strong> pelo WhatsApp.</div>
+            </div>
+            <div class="na-step">
+              <span class="n">3</span>
+              <div>Responda os dados do imóvel e dos proponentes. Pronto, o laudo é gerado.</div>
+            </div>
+          </div>
+
+          <a class="btn btn-primary btn-lg" href="https://wa.me/5549911386703" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.948 9.948 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.946 7.946 0 0 1-4.053-1.105l-.291-.173-3.007.894.894-3.007-.173-.291A7.948 7.948 0 0 1 4 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+            Abrir WhatsApp
+          </a>
+        </div>
+
+        <div class="qr-card">
+          <div class="qr-img">
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https://wa.me/5549911386703&color=060B16&bgcolor=FFFFFF&margin=0"
+              alt="QR Code para iniciar conversa no WhatsApp"
+            />
+          </div>
+          <div class="qr-label">
+            Aponte a câmera do celular<br/>
+            <strong style="color:var(--white)">para abrir a conversa</strong>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    window.renderSidebar('nova-analise');
+    (async () => {
+      const user = await window.exigirLogin();
+      if (!user) return;
+      window.preencherUsuarioSidebar(user);
+    })();
+  </script>
+</body>
+</html>
