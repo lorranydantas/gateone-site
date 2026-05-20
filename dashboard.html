@@ -7,10 +7,6 @@
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
-  <button class="hamb" id="btnHamb" aria-label="Menu">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-
   <div class="app">
     <aside class="sidebar" id="sidebar"></aside>
 
@@ -100,7 +96,7 @@
             <div class="qa-item">
               <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.7 1.4 5.2L2 22l4.8-1.4c1.5.8 3.3 1.4 5.2 1.4 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.8 0-3.6-.5-5.1-1.4l-.3-.2-3 .9.9-3-.2-.3C3.5 14.5 3 13.3 3 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9z"/></svg></div>
               <div class="text">Número do bot WhatsApp</div>
-              <span class="pill">+55 49 9113 8670</span>
+              <span class="pill">+55 11 99672-6735</span>
             </div>
             <div class="qa-item">
               <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
@@ -359,16 +355,6 @@
         },
       });
     }
-
-    // --- Hamburger ---
-    document.getElementById('btnHamb').addEventListener('click', () => {
-      document.body.classList.toggle('sidebar-open');
-    });
-    document.addEventListener('click', (e) => {
-      if (!document.body.classList.contains('sidebar-open')) return;
-      const inside = e.target.closest('.sidebar') || e.target.closest('#btnHamb');
-      if (!inside) document.body.classList.remove('sidebar-open');
-    });
 
     // --- Period filter ---
     document.getElementById('periodFilter').addEventListener('click', (e) => {

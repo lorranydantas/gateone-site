@@ -334,19 +334,6 @@ h1,h2,h3,h4{font-family:'Inter',sans-serif;font-weight:600;color:var(--text);let
 .sk-num{height:32px;width:80px;margin-top:6px}
 
 /* ──────────────────────────────
-   HAMBURGER (apenas mobile)
-   ────────────────────────────── */
-.hamb{
-  display:none;
-  position:fixed;top:14px;left:14px;z-index:90;
-  width:42px;height:42px;border-radius:999px;
-  background:var(--card);border:1px solid var(--line);
-  align-items:center;justify-content:center;cursor:pointer;color:var(--text);
-  box-shadow:var(--shadow);
-}
-.hamb svg{width:18px;height:18px}
-
-/* ──────────────────────────────
    FORMS (preservado)
    ────────────────────────────── */
 .main-head{margin-bottom:28px}
@@ -484,15 +471,8 @@ h1,h2,h3,h4{font-family:'Inter',sans-serif;font-weight:600;color:var(--text);let
   .metric-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:768px){
-  .sidebar{
-    position:fixed;left:0;top:0;
-    transform:translateX(-100%);
-    transition:transform .25s ease-out;
-    box-shadow:none;
-  }
-  body.sidebar-open .sidebar{transform:translateX(0);box-shadow:8px 0 30px rgba(0,0,0,.4)}
-  .hamb{display:inline-flex}
-  .main{padding:62px 18px 56px}
+  .sidebar{display:none}
+  .main{padding:24px 18px 56px}
   .page-head{align-items:flex-start;flex-direction:column}
   .table-wrap, .table-card{overflow-x:auto}
 }
