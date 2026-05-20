@@ -334,7 +334,7 @@
         data: {
           labels,
           datasets: [
-            { type:'bar', label:'Análises', data: barras, backgroundColor:'rgba(21,88,255,.8)', borderRadius:6, maxBarThickness:24 },
+            { type:'bar', label:'Análises', data: barras, backgroundColor:'#1558FF', borderRadius:6, maxBarThickness:24 },
             { type:'line', label:'Tendência', data: linha, borderColor:'#FF6A00', backgroundColor:'transparent', tension:0.4, borderWidth:2, pointRadius:0 },
           ],
         },
@@ -344,13 +344,13 @@
           plugins: {
             legend: { display:false },
             tooltip: {
-              backgroundColor:'#0C1428', borderColor:'rgba(21,88,255,.3)', borderWidth:1,
-              titleColor:'#F0F4FF', bodyColor:'#F0F4FF', padding:10, displayColors:false,
+              backgroundColor:'#FFFFFF', borderColor:'#E8ECF4', borderWidth:1,
+              titleColor:'#1A1D2E', bodyColor:'#1A1D2E', padding:10, displayColors:false,
             },
           },
           scales: {
             x: { grid:{ display:false }, ticks:{ color:'#6B7A99', font:{ size:11 } } },
-            y: { grid:{ color:'rgba(255,255,255,.04)' }, ticks:{ color:'#6B7A99', font:{ size:11 }, precision:0 }, beginAtZero:true },
+            y: { grid:{ color:'#E8ECF4' }, ticks:{ color:'#6B7A99', font:{ size:11 }, precision:0 }, beginAtZero:true },
           },
         },
       });
