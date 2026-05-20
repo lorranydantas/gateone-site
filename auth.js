@@ -3,7 +3,7 @@
 // ========================================
 
 const SUPABASE_URL = 'https://azkitnuxlawufkqbsmej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_wMjYVFX5dreHh1b5M-hx8w_o9TLG';
+const SUPABASE_KEY = 'sb_publishable_wMjYVFX5dreHh1b5M-hx8w_o9TLGhCN';
 
 const { createClient } = window.supabase;
 window.gateoneSupabase = createClient(SUPABASE_URL, SUPABASE_KEY);
