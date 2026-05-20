@@ -54,14 +54,21 @@
         ${futurosHtml}
       </nav>
       <div class="side-foot">
-        <div class="user-email" id="sideUserEmail">…</div>
+        <div class="user-block">
+          <div class="avatar" id="sideAvatar">?</div>
+          <div class="user-info">
+            <div class="user-email" id="sideUserEmail">…</div>
+          </div>
+        </div>
         <button class="btn btn-outline btn-block btn-sm" onclick="window.sair()">Sair</button>
       </div>
     `;
   };
 
   window.preencherUsuarioSidebar = function (user) {
-    const el = document.getElementById('sideUserEmail');
-    if (el && user?.email) el.textContent = user.email;
+    const emailEl = document.getElementById('sideUserEmail');
+    const avEl = document.getElementById('sideAvatar');
+    if (emailEl && user?.email) emailEl.textContent = user.email;
+    if (avEl && user?.email) avEl.textContent = user.email.trim().charAt(0).toUpperCase();
   };
 })();

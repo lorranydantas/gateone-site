@@ -7,83 +7,120 @@
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
+  <button class="hamb" id="btnHamb" aria-label="Menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+
   <div class="app">
     <aside class="sidebar" id="sidebar"></aside>
 
     <main class="main">
-      <div class="main-head">
-        <h1>Visão Geral</h1>
-        <p>Acompanhe o pulso da sua operação de crédito.</p>
-      </div>
+      <header class="page-head">
+        <div>
+          <h1>Visão Geral</h1>
+          <p class="sub">Acompanhe o pulso da sua operação de crédito.</p>
+        </div>
+        <div class="period-filter" id="periodFilter">
+          <button data-period="7" class="active">7 dias</button>
+          <button data-period="30">30 dias</button>
+          <button data-period="90">90 dias</button>
+        </div>
+      </header>
 
       <div id="msgGlobal" class="msg"></div>
 
-      <section class="metrics">
-        <div class="card metric">
-          <div class="label">Total de análises</div>
-          <div class="value" id="mTotal">—</div>
-          <div class="hint">Análises realizadas</div>
+      <!-- LINHA 1 — Métricas -->
+      <section class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <div class="label">Total de Análises</div>
+          <div class="value" id="mTotal"><span class="sk sk-num"></span></div>
+          <div class="delta flat" id="dTotal"><span class="arrow">—</span> vs período anterior</div>
         </div>
-        <div class="card metric">
+
+        <div class="metric-card">
+          <div class="metric-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
           <div class="label">Aprovados</div>
-          <div class="value blue" id="mAprovados">—</div>
-          <div class="hint">Viabilidade confirmada</div>
+          <div class="value" id="mAprovados"><span class="sk sk-num"></span></div>
+          <div class="delta flat" id="dAprovados"><span class="arrow">—</span> vs período anterior</div>
         </div>
-        <div class="card metric">
+
+        <div class="metric-card">
+          <div class="metric-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
           <div class="label">Reprovados</div>
-          <div class="value orange" id="mReprovados">—</div>
-          <div class="hint">Aguardando ajustes</div>
+          <div class="value" id="mReprovados"><span class="sk sk-num"></span></div>
+          <div class="delta flat" id="dReprovados"><span class="arrow">—</span> vs período anterior</div>
         </div>
-        <div class="card metric">
-          <div class="label">Taxa de aprovação</div>
-          <div class="value" id="mTaxa">—</div>
-          <div class="hint">Sobre o total</div>
+
+        <div class="metric-card">
+          <div class="metric-icon white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          </div>
+          <div class="label">Taxa de Aprovação</div>
+          <div class="value" id="mTaxa"><span class="sk sk-num"></span></div>
+          <div class="delta flat" id="dTaxa"><span class="arrow">—</span> vs período anterior</div>
         </div>
       </section>
 
-      <div class="section-grid">
-        <div class="card">
-          <h2 class="card-title">Distribuição por perfil de risco</h2>
-          <p class="card-sub">Como suas análises se distribuem entre os perfis classificados pelo motor.</p>
-          <div class="chart">
-            <div class="chart-row">
-              <span class="name">Alto</span>
-              <div class="bar-wrap"><div class="bar alto" id="barAlto" style="width:0%"></div></div>
-              <span class="count" id="cntAlto">0</span>
-            </div>
-            <div class="chart-row">
-              <span class="name">Médio</span>
-              <div class="bar-wrap"><div class="bar medio" id="barMedio" style="width:0%"></div></div>
-              <span class="count" id="cntMedio">0</span>
-            </div>
-            <div class="chart-row">
-              <span class="name">Baixo</span>
-              <div class="bar-wrap"><div class="bar baixo" id="barBaixo" style="width:0%"></div></div>
-              <span class="count" id="cntBaixo">0</span>
-            </div>
+      <!-- LINHA 2 — Chart + Quick actions -->
+      <section class="row-split">
+        <div class="card chart-card">
+          <div class="card-title">Análises por semana</div>
+          <div class="card-sub">Últimas 8 semanas</div>
+          <div class="canvas-wrap">
+            <canvas id="weekChart"></canvas>
           </div>
         </div>
 
         <div class="card">
-          <h2 class="card-title">Ações rápidas</h2>
-          <p class="card-sub">Comece uma análise ou configure sua política.</p>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
-            <a class="btn btn-primary btn-block" href="nova-analise.html">+ Nova análise</a>
-            <a class="btn btn-orange btn-block" href="politica.html">Editar política de crédito</a>
-            <a class="btn btn-outline btn-block" href="analises.html">Ver todas as análises</a>
+          <div class="card-title">Ações rápidas</div>
+          <div class="card-sub">Acesso direto às operações.</div>
+          <div class="qa-list">
+            <div class="qa-item">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+              <div class="text">Iniciar nova análise</div>
+              <a href="nova-analise.html" class="btn btn-primary btn-xs">Iniciar</a>
+            </div>
+            <a href="politica.html" class="qa-item" style="text-decoration:none;color:inherit">
+              <div class="ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <div class="text">Configurar política de crédito</div>
+              <span class="arrow">&rarr;</span>
+            </a>
+            <a href="analises.html" class="qa-item" style="text-decoration:none;color:inherit">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg></div>
+              <div class="text">Ver todas as análises</div>
+              <span class="arrow">&rarr;</span>
+            </a>
+            <div class="qa-item">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.7 1.4 5.2L2 22l4.8-1.4c1.5.8 3.3 1.4 5.2 1.4 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.8 0-3.6-.5-5.1-1.4l-.3-.2-3 .9.9-3-.2-.3C3.5 14.5 3 13.3 3 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9z"/></svg></div>
+              <div class="text">Número do bot WhatsApp</div>
+              <span class="pill">+55 49 9113 8670</span>
+            </div>
+            <div class="qa-item">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+              <div class="text">Exportar relatório</div>
+              <span class="pill muted">Em breve</span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="table-wrap">
-        <div class="table-head">
+      <!-- LINHA 3 — Análises recentes -->
+      <section class="table-card">
+        <div class="table-card-head">
           <div>
             <h2>Análises recentes</h2>
-            <p>Últimas 5 análises realizadas na sua incorporadora.</p>
+            <p class="sub">Últimas 5 análises realizadas.</p>
           </div>
-          <a class="btn btn-outline btn-sm" href="analises.html">Ver todas &rarr;</a>
+          <a class="view-all" href="analises.html">Ver todas &rarr;</a>
         </div>
-        <table class="table">
+        <table class="tbl">
           <thead>
             <tr>
               <th>Data</th>
@@ -91,25 +128,72 @@
               <th>Score</th>
               <th>Perfil</th>
               <th>Status</th>
+              <th class="row-action">Ação</th>
             </tr>
           </thead>
           <tbody id="tbodyRecentes">
-            <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">Carregando…</td></tr>
+            <tr>
+              <td colspan="6">
+                <div class="empty">
+                  <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                  <h3>Carregando análises…</h3>
+                  <p>Aguarde alguns instantes.</p>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
-      </div>
+      </section>
+
+      <!-- Distribuição por perfil -->
+      <section class="card risk-card">
+        <h2>Distribuição por perfil de risco</h2>
+        <div class="risk-rows">
+          <div class="risk-row">
+            <span class="name">Alto</span>
+            <div class="bar"><div class="fill alto" id="riskFillAlto" style="width:0%"></div></div>
+            <span class="pct" id="riskPctAlto">0%</span>
+          </div>
+          <div class="risk-row">
+            <span class="name">Médio</span>
+            <div class="bar"><div class="fill medio" id="riskFillMedio" style="width:0%"></div></div>
+            <span class="pct" id="riskPctMedio">0%</span>
+          </div>
+          <div class="risk-row">
+            <span class="name">Baixo</span>
+            <div class="bar"><div class="fill baixo" id="riskFillBaixo" style="width:0%"></div></div>
+            <span class="pct" id="riskPctBaixo">0%</span>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="auth.js"></script>
   <script src="sidebar.js"></script>
   <script>
     window.renderSidebar('dashboard');
+
     const supa = window.gateoneSupabase;
     const msg = document.getElementById('msgGlobal');
     const tbody = document.getElementById('tbodyRecentes');
     const aviso = (t, tipo='err') => { msg.textContent = t; msg.className = `msg ${tipo} show`; };
+
+    // Estado
+    let incorporadora = null;
+    let todasAnalises = [];
+    let periodoDias = 7;
+    let weekChart = null;
+
+    // CPF mascarado: ***.XXX.XXX-** (dígitos 4-9 visíveis)
+    function mascararCpfMid(cpf) {
+      if (!cpf) return '—';
+      const d = String(cpf).replace(/\D/g, '');
+      if (d.length !== 11) return cpf;
+      return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
+    }
 
     function badgePerfil(p){
       const cls = ({ALTO:'alto',MEDIO:'medio',BAIXO:'baixo'})[p] || 'medio';
@@ -119,62 +203,205 @@
     function badgeStatus(a){
       return a ? '<span class="badge aprovado">Aprovado</span>' : '<span class="badge reprovado">Reprovado</span>';
     }
+    function scoreCell(score){
+      if (score == null) return '<span class="score-cell"><span class="num">—</span></span>';
+      const pct = Math.max(0, Math.min(100, (score/1000)*100));
+      return `<span class="score-cell"><span class="num">${score}</span><span class="mini-bar"><span class="fill" style="width:${pct}%"></span></span></span>`;
+    }
 
+    // --- filtros / cálculos ---
+    function noPeriodo(items, dias) {
+      const limite = Date.now() - dias*24*60*60*1000;
+      return items.filter(a => new Date(a.created_at).getTime() >= limite);
+    }
+    function noPeriodoAnterior(items, dias) {
+      const fim = Date.now() - dias*24*60*60*1000;
+      const inicio = fim - dias*24*60*60*1000;
+      return items.filter(a => {
+        const t = new Date(a.created_at).getTime();
+        return t >= inicio && t < fim;
+      });
+    }
+    function calcularDelta(cur, prev) {
+      if (prev === 0) return cur === 0 ? { pct: 0, dir: 'flat' } : { pct: null, dir: 'up' };
+      const pct = ((cur - prev) / prev) * 100;
+      return { pct: Math.round(pct), dir: pct === 0 ? 'flat' : (pct > 0 ? 'up' : 'down') };
+    }
+    function aplicarDelta(elId, delta) {
+      const el = document.getElementById(elId);
+      el.classList.remove('up','down','flat');
+      el.classList.add(delta.dir);
+      const arrow = delta.dir === 'up' ? '↑' : delta.dir === 'down' ? '↓' : '—';
+      const pctStr = delta.pct == null ? '+novo' : (delta.pct === 0 ? '0%' : `${Math.abs(delta.pct)}%`);
+      el.innerHTML = `<span class="arrow">${arrow} ${pctStr}</span> vs período anterior`;
+    }
+
+    // --- agregação por semana (últimas 8 semanas) ---
+    function agruparPorSemana(items) {
+      const buckets = new Array(8).fill(0);
+      const agora = Date.now();
+      items.forEach(a => {
+        const idadeDias = Math.floor((agora - new Date(a.created_at).getTime()) / (24*60*60*1000));
+        const idadeSem = Math.floor(idadeDias / 7);
+        if (idadeSem >= 0 && idadeSem < 8) buckets[7 - idadeSem]++; // mais antigo → mais novo
+      });
+      return buckets;
+    }
+    function mediaMovel(arr, janela = 3) {
+      return arr.map((_, i) => {
+        const ini = Math.max(0, i - Math.floor(janela/2));
+        const fim = Math.min(arr.length, ini + janela);
+        const slice = arr.slice(ini, fim);
+        return slice.reduce((s, v) => s + v, 0) / slice.length;
+      });
+    }
+
+    // --- render ---
+    function atualizar() {
+      const cur = noPeriodo(todasAnalises, periodoDias);
+      const prev = noPeriodoAnterior(todasAnalises, periodoDias);
+
+      const total = cur.length;
+      const aprovados = cur.filter(a => a.aprovado).length;
+      const reprovados = total - aprovados;
+      const taxa = total > 0 ? aprovados/total*100 : 0;
+
+      const totalPrev = prev.length;
+      const aprovadosPrev = prev.filter(a => a.aprovado).length;
+      const reprovadosPrev = totalPrev - aprovadosPrev;
+      const taxaPrev = totalPrev > 0 ? aprovadosPrev/totalPrev*100 : 0;
+
+      document.getElementById('mTotal').textContent = total;
+      document.getElementById('mAprovados').textContent = aprovados;
+      document.getElementById('mReprovados').textContent = reprovados;
+      document.getElementById('mTaxa').textContent = `${taxa.toFixed(1)}%`;
+
+      aplicarDelta('dTotal',      calcularDelta(total, totalPrev));
+      aplicarDelta('dAprovados',  calcularDelta(aprovados, aprovadosPrev));
+      aplicarDelta('dReprovados', calcularDelta(reprovados, reprovadosPrev));
+      aplicarDelta('dTaxa',       calcularDelta(Math.round(taxa*10), Math.round(taxaPrev*10)));
+
+      // Distribuição por perfil (no período)
+      const cAlto  = cur.filter(a => a.perfil === 'ALTO').length;
+      const cMedio = cur.filter(a => a.perfil === 'MEDIO').length;
+      const cBaixo = cur.filter(a => a.perfil === 'BAIXO').length;
+      const t = Math.max(cAlto + cMedio + cBaixo, 1);
+      const pAlto  = Math.round(cAlto  / t * 100);
+      const pMedio = Math.round(cMedio / t * 100);
+      const pBaixo = Math.round(cBaixo / t * 100);
+      document.getElementById('riskPctAlto').textContent  = `${pAlto}%`;
+      document.getElementById('riskPctMedio').textContent = `${pMedio}%`;
+      document.getElementById('riskPctBaixo').textContent = `${pBaixo}%`;
+      document.getElementById('riskFillAlto').style.width  = `${pAlto}%`;
+      document.getElementById('riskFillMedio').style.width = `${pMedio}%`;
+      document.getElementById('riskFillBaixo').style.width = `${pBaixo}%`;
+
+      // Tabela: 5 mais recentes do período (ou geral se vazio)
+      const recentes = (cur.length ? cur : todasAnalises)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5);
+
+      if (!recentes.length) {
+        tbody.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <h3>Nenhuma análise ainda</h3>
+              <p>Inicie uma pelo WhatsApp.</p>
+            </div>
+          </td></tr>`;
+      } else {
+        tbody.innerHTML = recentes.map(r => `
+          <tr>
+            <td style="color:var(--text-muted)">${window.formatDataBR(r.created_at)}</td>
+            <td>${mascararCpfMid(r.cpf_proponente1)}</td>
+            <td>${scoreCell(r.score)}</td>
+            <td>${badgePerfil(r.perfil)}</td>
+            <td>${badgeStatus(r.aprovado)}</td>
+            <td class="row-action"><a class="btn btn-outline btn-xs" href="analises.html">Ver &rarr;</a></td>
+          </tr>
+        `).join('');
+      }
+
+      // Chart por semana (sempre últimas 8 semanas, independente do filtro de período)
+      const semData = agruparPorSemana(todasAnalises);
+      const dadosBarra = todasAnalises.length > 0 ? semData : [3, 7, 5, 12, 8, 15, 11, 18];
+      const linhaTrend = mediaMovel(dadosBarra, 3);
+      renderChart(dadosBarra, linhaTrend);
+    }
+
+    function renderChart(barras, linha) {
+      const ctx = document.getElementById('weekChart').getContext('2d');
+      const labels = ['S1','S2','S3','S4','S5','S6','S7','S8'];
+      if (weekChart) { weekChart.data.datasets[0].data = barras; weekChart.data.datasets[1].data = linha; weekChart.update(); return; }
+      weekChart = new Chart(ctx, {
+        data: {
+          labels,
+          datasets: [
+            { type:'bar', label:'Análises', data: barras, backgroundColor:'rgba(21,88,255,.8)', borderRadius:6, maxBarThickness:24 },
+            { type:'line', label:'Tendência', data: linha, borderColor:'#FF6A00', backgroundColor:'transparent', tension:0.4, borderWidth:2, pointRadius:0 },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          responsive: true,
+          plugins: {
+            legend: { display:false },
+            tooltip: {
+              backgroundColor:'#0C1428', borderColor:'rgba(21,88,255,.3)', borderWidth:1,
+              titleColor:'#F0F4FF', bodyColor:'#F0F4FF', padding:10, displayColors:false,
+            },
+          },
+          scales: {
+            x: { grid:{ display:false }, ticks:{ color:'#6B7A99', font:{ size:11 } } },
+            y: { grid:{ color:'rgba(255,255,255,.04)' }, ticks:{ color:'#6B7A99', font:{ size:11 }, precision:0 }, beginAtZero:true },
+          },
+        },
+      });
+    }
+
+    // --- Hamburger ---
+    document.getElementById('btnHamb').addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!document.body.classList.contains('sidebar-open')) return;
+      const inside = e.target.closest('.sidebar') || e.target.closest('#btnHamb');
+      if (!inside) document.body.classList.remove('sidebar-open');
+    });
+
+    // --- Period filter ---
+    document.getElementById('periodFilter').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-period]');
+      if (!btn) return;
+      document.querySelectorAll('#periodFilter button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      periodoDias = parseInt(btn.dataset.period, 10);
+      atualizar();
+    });
+
+    // --- Bootstrap ---
     (async () => {
       const user = await window.exigirLogin();
       if (!user) return;
       window.preencherUsuarioSidebar(user);
 
-      const incorporadora = await window.buscarIncorporadoraDoUsuario(user);
+      incorporadora = await window.buscarIncorporadoraDoUsuario(user);
       if (!incorporadora) {
         aviso('Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
         tbody.innerHTML = '';
         return;
       }
 
-      const { data: analises, error } = await supa
+      const { data, error } = await supa
         .from('analises')
         .select('id, created_at, cpf_proponente1, score, perfil, aprovado')
         .eq('incorporadora_id', incorporadora.id)
         .order('created_at', { ascending: false });
 
       if (error) { aviso('Erro carregando análises: ' + error.message); return; }
-
-      const total = analises.length;
-      const aprovados = analises.filter(a => a.aprovado).length;
-      const reprovados = total - aprovados;
-      const taxa = total > 0 ? (aprovados/total*100).toFixed(1) : '0';
-
-      document.getElementById('mTotal').textContent = total;
-      document.getElementById('mAprovados').textContent = aprovados;
-      document.getElementById('mReprovados').textContent = reprovados;
-      document.getElementById('mTaxa').textContent = `${taxa}%`;
-
-      const cAlto = analises.filter(a => a.perfil === 'ALTO').length;
-      const cMedio = analises.filter(a => a.perfil === 'MEDIO').length;
-      const cBaixo = analises.filter(a => a.perfil === 'BAIXO').length;
-      const maxV = Math.max(cAlto, cMedio, cBaixo, 1);
-      document.getElementById('cntAlto').textContent = cAlto;
-      document.getElementById('cntMedio').textContent = cMedio;
-      document.getElementById('cntBaixo').textContent = cBaixo;
-      document.getElementById('barAlto').style.width  = `${(cAlto/maxV)*100}%`;
-      document.getElementById('barMedio').style.width = `${(cMedio/maxV)*100}%`;
-      document.getElementById('barBaixo').style.width = `${(cBaixo/maxV)*100}%`;
-
-      const recentes = analises.slice(0, 5);
-      if (!recentes.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><h3>Sem análises ainda</h3>Quando o bot processar a primeira, ela aparece aqui.</div></td></tr>`;
-      } else {
-        tbody.innerHTML = recentes.map(r => `
-          <tr>
-            <td style="color:var(--muted-strong)">${window.formatDataBR(r.created_at)}</td>
-            <td>${window.mascararCPF(r.cpf_proponente1)}</td>
-            <td><span class="num">${r.score ?? '—'}</span></td>
-            <td>${badgePerfil(r.perfil)}</td>
-            <td>${badgeStatus(r.aprovado)}</td>
-          </tr>
-        `).join('');
-      }
+      todasAnalises = data || [];
+      atualizar();
     })();
   </script>
 </body>
