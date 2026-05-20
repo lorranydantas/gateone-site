@@ -5,35 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Entrar — GATEONE</title>
   <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    /* ── Override mínimo do dashboard.css pra este layout ── */
+    body{margin:0;background:#fff}
+
+    .login-split{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      min-height:100vh;
+    }
+
+    /* ── Coluna esquerda — imagem com overlay ── */
+    .login-aside{
+      position:relative;
+      background-image:url('assets/hero.png');
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      display:flex;align-items:center;justify-content:center;
+      overflow:hidden;
+    }
+    .login-aside::before{
+      content:"";position:absolute;inset:0;
+      background:rgba(6,11,22,.45);
+    }
+    .login-aside-content{
+      position:relative;z-index:1;
+      text-align:center;
+      padding:0 32px;max-width:460px;
+    }
+    .login-aside .logo{
+      font-size:32px;display:inline-flex;
+      margin-bottom:20px;
+    }
+    .aside-tagline{
+      color:#fff;
+      font-family:'Inter',sans-serif;font-size:18px;font-weight:500;
+      line-height:1.45;margin-bottom:12px;
+    }
+    .aside-sub{
+      color:rgba(255,255,255,.7);
+      font-family:'Inter',sans-serif;font-size:13px;
+      line-height:1.55;
+    }
+
+    /* ── Coluna direita — formulário ── */
+    .login-main{
+      display:flex;align-items:center;justify-content:center;
+      background:#fff;
+      padding:40px 32px;
+    }
+    .login-card{
+      width:100%;max-width:380px;
+      display:flex;flex-direction:column;
+    }
+    .login-card .logo-sm{
+      font-size:20px;display:inline-flex;
+      margin-bottom:28px;
+    }
+    .login-card .logo-mobile{display:none}
+    .login-card h1{
+      font-family:'Inter',sans-serif;font-weight:600;font-size:24px;
+      color:#1A1D2E;letter-spacing:-.01em;
+      margin-bottom:6px;
+    }
+    .login-card .lead{
+      font-size:13px;color:#6B7A99;
+      line-height:1.5;margin-bottom:28px;
+    }
+
+    .login-form{display:flex;flex-direction:column;gap:14px}
+    .login-form .field{display:flex;flex-direction:column;gap:6px}
+    .login-form .field label{
+      font-size:12px;color:#6B7A99;font-weight:500;
+    }
+    .login-form .field input{
+      background:#fff;
+      border:1px solid #E8ECF4;border-radius:8px;
+      padding:12px 14px;color:#1A1D2E;
+      font-family:'Inter',sans-serif;font-size:14px;outline:none;
+      transition:border-color .15s,box-shadow .15s;
+    }
+    .login-form .field input:focus{
+      border-color:#1558FF;
+      box-shadow:0 0 0 3px rgba(21,88,255,.1);
+    }
+
+    .btn-login{
+      width:100%;height:48px;
+      background:#1558FF;color:#fff;
+      border:none;border-radius:999px;
+      font-family:'Inter',sans-serif;font-size:15px;font-weight:600;
+      cursor:pointer;margin-top:6px;
+      transition:background .15s,box-shadow .15s,transform .1s;
+    }
+    .btn-login:hover{background:#0e46d4;box-shadow:0 6px 18px rgba(21,88,255,.25)}
+    .btn-login:active{transform:translateY(1px)}
+    .btn-login:disabled{opacity:.7;cursor:not-allowed}
+
+    .divider-l{
+      display:flex;align-items:center;gap:12px;
+      color:#6B7A99;font-size:11px;font-weight:600;
+      text-transform:uppercase;letter-spacing:.16em;
+      margin:22px 0;
+    }
+    .divider-l::before,.divider-l::after{
+      content:"";flex:1;height:1px;background:#E8ECF4;
+    }
+
+    .btn-login-google{
+      width:100%;height:48px;
+      background:#fff;color:#1A1D2E;
+      border:1px solid #E8ECF4;border-radius:999px;
+      font-family:'Inter',sans-serif;font-size:15px;font-weight:600;
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      transition:background .15s,border-color .15s;
+    }
+    .btn-login-google:hover{background:#F4F6FB;border-color:#D4DAE6}
+
+    .login-footer{
+      text-align:center;margin-top:24px;
+      font-size:13px;color:#6B7A99;
+    }
+    .login-footer a{
+      color:#FF6A00;text-decoration:none;font-weight:600;
+    }
+    .login-footer a:hover{text-decoration:underline}
+
+    .msg{
+      padding:10px 14px;border-radius:10px;
+      font-size:13px;margin-top:4px;display:none;
+      border:1px solid transparent;
+    }
+    .msg.err{background:#FFF3EC;border-color:rgba(255,106,0,.3);color:#e15800}
+    .msg.show{display:block}
+
+    /* ── Mobile ── */
+    @media (max-width:768px){
+      .login-split{grid-template-columns:1fr}
+      .login-aside{display:none}
+      .login-main{padding:32px 22px;min-height:100vh}
+      .login-card{max-width:420px}
+      .login-card .logo-sm{display:none}
+      .login-card .logo-mobile{
+        display:inline-flex;font-size:36px;
+        align-self:center;margin-bottom:32px;
+      }
+      .login-card h1{font-size:22px;text-align:center}
+      .login-card .lead{text-align:center}
+    }
+  </style>
 </head>
 <body>
-  <main class="auth-wrap">
-    <div class="auth-card">
-      <a class="logo" href="index.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
-      <h1>Acesso do gestor</h1>
-      <p class="lead">Entre para acompanhar análises de crédito da sua incorporadora.</p>
+  <div class="login-split">
+    <!-- Coluna esquerda — imagem com overlay -->
+    <aside class="login-aside">
+      <div class="login-aside-content">
+        <a class="logo" href="index.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
+        <p class="aside-tagline">Inteligência de crédito para incorporadoras.</p>
+        <p class="aside-sub">Análise completa em segundos. Laudo enviado direto no WhatsApp.</p>
+      </div>
+    </aside>
 
-      <form id="formLogin" class="form">
-        <div class="field">
-          <label for="email">Email</label>
-          <input id="email" type="email" autocomplete="email" required placeholder="voce@incorporadora.com.br" />
-        </div>
-        <div class="field">
-          <label for="senha">Senha</label>
-          <input id="senha" type="password" autocomplete="current-password" required minlength="6" />
-        </div>
-        <button id="btnEntrar" type="submit" class="btn btn-primary btn-block btn-lg">Entrar</button>
-        <div id="msg" class="msg"></div>
-      </form>
+    <!-- Coluna direita — formulário -->
+    <main class="login-main">
+      <div class="login-card">
+        <a class="logo logo-sm" href="index.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
+        <a class="logo logo-mobile" href="index.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
 
-      <div class="divider">ou</div>
+        <h1>Acesso do gestor</h1>
+        <p class="lead">Entre para acompanhar as análises da sua incorporadora.</p>
 
-      <button id="btnGoogle" type="button" class="btn btn-google btn-block btn-lg">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 8 3l5.7-5.7C34.5 7.1 29.5 5 24 5 16.3 5 9.6 9.5 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.3l-6.3-5.2C29.3 35 26.8 36 24 36c-5.3 0-9.7-3-11.3-7.4l-6.6 5.1C9.5 39.4 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.3 5.2c-.4.4 6.4-4.7 6.4-14.6 0-1.2-.1-2.4-.4-3.5z"/></svg>
-        Entrar com Google
-      </button>
-    </div>
-  </main>
+        <form id="formLogin" class="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email" required placeholder="voce@incorporadora.com.br" />
+          </div>
+          <div class="field">
+            <label for="senha">Senha</label>
+            <input id="senha" type="password" autocomplete="current-password" required minlength="6" />
+          </div>
+          <button id="btnEntrar" type="submit" class="btn-login">Entrar</button>
+          <div id="msg" class="msg"></div>
+        </form>
+
+        <div class="divider-l">ou</div>
+
+        <button id="btnGoogle" type="button" class="btn-login-google">
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 8 3l5.7-5.7C34.5 7.1 29.5 5 24 5 16.3 5 9.6 9.5 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.3l-6.3-5.2C29.3 35 26.8 36 24 36c-5.3 0-9.7-3-11.3-7.4l-6.6 5.1C9.5 39.4 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.3 5.2c-.4.4 6.4-4.7 6.4-14.6 0-1.2-.1-2.4-.4-3.5z"/></svg>
+          Entrar com Google
+        </button>
+
+        <p class="login-footer">
+          Não tem acesso? <a href="https://wa.me/5511996726735" target="_blank" rel="noopener">Fale com a GATEONE</a>
+        </p>
+      </div>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
@@ -42,6 +211,7 @@
     const msg = document.getElementById('msg');
     const mostrarErro = (t) => { msg.textContent = t; msg.className = 'msg err show'; };
 
+    // Se já logado, manda direto pro dashboard
     (async () => {
       const { data } = await supa.auth.getSession();
       if (data.session) window.location.replace('dashboard.html');
