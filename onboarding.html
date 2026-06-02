@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuração inicial — GATEONE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --bg:#F4F6FB;
+      --card:#fff;
+      --blue:#1558FF;
+      --blue-soft:#EEF2FF;
+      --blue-deep:#0e46d4;
+      --orange:#FF6A00;
+      --text:#1A1D2E;
+      --text-muted:#6B7A99;
+      --line:#E8ECF4;
+      --gray:#C8CFDB;
+    }
+
+    body{
+      font-family:'Inter',-apple-system,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      -webkit-font-smoothing:antialiased;
+      font-size:14px;line-height:1.5;
+    }
+
+    .page{
+      min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;
+      padding:32px 20px 48px;
+    }
+
+    .logo{
+      font-family:'Barlow Condensed',sans-serif;font-weight:900;
+      font-size:32px;letter-spacing:.05em;line-height:1;
+      text-decoration:none;margin-bottom:22px;
+    }
+    .logo .gate{color:var(--blue)}
+    .logo .one{color:var(--orange)}
+
+    .card{
+      width:100%;max-width:680px;
+      background:var(--card);
+      border:1px solid var(--line);border-radius:16px;
+      box-shadow:0 4px 20px rgba(0,0,0,.05);
+      padding:32px 36px;
+    }
+
+    /* Progress bar */
+    .progress{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:32px;gap:0;
+    }
+    .step-pill{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+    .step-pill .circle{
+      width:32px;height:32px;border-radius:50%;
+      background:#F4F6FB;border:1.5px solid var(--line);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:13px;color:var(--text-muted);
+      transition:all .2s;
+    }
+    .step-pill .label{font-size:10.5px;color:var(--text-muted);font-weight:600;letter-spacing:.02em}
+    .step-pill.active .circle{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 4px rgba(21,88,255,.12)}
+    .step-pill.active .label{color:var(--blue)}
+    .step-pill.done .circle{background:var(--blue);border-color:var(--blue);color:#fff}
+    .step-pill.done .label{color:var(--text)}
+    .step-line{
+      flex:1;height:2px;background:var(--line);margin:0 6px;
+      margin-top:-22px; /* alinhar com os círculos */
+    }
+    .step-line.done{background:var(--blue)}
+
+    /* Step content */
+    h2{
+      font-family:'Inter',sans-serif;font-weight:700;
+      font-size:1.4rem;letter-spacing:-.01em;margin-bottom:4px;
+    }
+    .sub{color:var(--text-muted);font-size:.86rem;margin-bottom:24px}
+
+    .fields{display:flex;flex-direction:column;gap:14px}
+    .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+    .field{display:flex;flex-direction:column;gap:5px}
+    .field label{
+      font-size:12px;color:var(--text);font-weight:600;
+    }
+    .field label .opt{font-size:11px;color:var(--text-muted);font-weight:500;margin-left:4px}
+    .field input,.field select{
+      background:#fff;border:1px solid var(--line);border-radius:8px;
+      padding:11px 13px;color:var(--text);
+      font-family:'Inter',sans-serif;font-size:.92rem;outline:none;
+      transition:border-color .15s,box-shadow .15s;
+    }
+    .field input:focus,.field select:focus{
+      border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,88,255,.1);
+    }
+    .field input[readonly]{background:#F8FAFD;color:var(--text-muted)}
+    .field .hint{font-size:11px;color:var(--text-muted)}
+
+    /* Hidden helper */
+    .hidden{display:none !important}
+
+    /* Corretor cards */
+    .corretores-list{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+    .corretor-card{
+      position:relative;background:#FAFBFD;border:1px solid var(--line);
+      border-radius:10px;padding:14px 16px 16px;
+    }
+    .corretor-card .corretor-num{
+      font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+      color:var(--text-muted);font-weight:700;margin-bottom:10px;
+    }
+    .corretor-remove{
+      position:absolute;top:10px;right:10px;
+      width:24px;height:24px;border-radius:50%;
+      background:#fff;border:1px solid var(--line);
+      color:var(--text-muted);font-size:13px;line-height:1;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:all .15s;
+    }
+    .corretor-remove:hover{border-color:var(--orange);color:var(--orange)}
+    .corretor-remove.hide{display:none}
+
+    .add-corretor{
+      width:100%;padding:11px;border-radius:999px;
+      background:transparent;border:1.5px dashed var(--line);
+      color:var(--text-muted);font-family:'Inter',sans-serif;
+      font-size:.86rem;font-weight:600;cursor:pointer;
+      transition:all .15s;
+    }
+    .add-corretor:hover{border-color:var(--blue);color:var(--blue)}
+    .add-corretor:disabled{opacity:.4;cursor:not-allowed}
+
+    /* Buttons + nav */
+    .actions{
+      display:flex;justify-content:space-between;align-items:center;
+      margin-top:28px;gap:12px;flex-wrap:wrap;
+    }
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      font-family:'Inter',sans-serif;font-size:.88rem;font-weight:600;
+      padding:11px 24px;border-radius:999px;border:1.5px solid transparent;cursor:pointer;
+      text-decoration:none;transition:all .15s;white-space:nowrap;
+    }
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn-primary:hover:not(:disabled){background:var(--blue-deep);box-shadow:0 6px 18px rgba(21,88,255,.25)}
+    .btn-back{background:transparent;color:var(--text-muted);border-color:var(--line)}
+    .btn-back:hover{border-color:var(--text-muted);color:var(--text)}
+
+    /* Messages */
+    .msg{
+      padding:10px 14px;border-radius:10px;font-size:.84rem;margin-top:14px;display:none;
+      border:1px solid transparent;
+    }
+    .msg.err{background:#FFF3EC;border-color:rgba(255,106,0,.3);color:#e15800}
+    .msg.ok{background:#EEF2FF;border-color:rgba(21,88,255,.3);color:var(--blue-deep)}
+    .msg.show{display:block}
+
+    /* Done screen */
+    .done{text-align:center;padding:20px 0 8px}
+    .done .success-mark{
+      width:88px;height:88px;border-radius:50%;
+      background:var(--blue);color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:48px;line-height:1;font-weight:900;
+      margin:0 auto 20px;
+      animation:pop .55s cubic-bezier(.2,1.5,.4,1);
+    }
+    @keyframes pop{
+      0%{transform:scale(0);opacity:0}
+      60%{transform:scale(1.08);opacity:1}
+      100%{transform:scale(1)}
+    }
+    .done h2{font-size:1.6rem;margin-bottom:6px}
+    .done p{color:var(--text-muted);margin-bottom:24px}
+
+    /* Mobile */
+    @media (max-width:640px){
+      .card{padding:24px 22px}
+      .row-2,.row-3{grid-template-columns:1fr}
+      .step-pill .label{display:none}
+      .step-line{margin-top:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a class="logo" href="dashboard.html"><span class="gate">GATE</span><span class="one">ONE</span></a>
+
+    <div class="card">
+      <!-- Progress bar -->
+      <div class="progress" id="progress">
+        <div class="step-pill active" data-step="1"><div class="circle">1</div><div class="label">Incorporadora</div></div>
+        <div class="step-line"></div>
+        <div class="step-pill" data-step="2"><div class="circle">2</div><div class="label">Empreendimento</div></div>
+        <div class="step-line"></div>
+        <div class="step-pill" data-step="3"><div class="circle">3</div><div class="label">Política</div></div>
+        <div class="step-line"></div>
+        <div class="step-pill" data-step="4"><div class="circle">4</div><div class="label">Corretores</div></div>
+      </div>
+
+      <!-- Step 1 -->
+      <section class="step" data-step="1">
+        <h2>Sua incorporadora</h2>
+        <p class="sub">Comece com os dados básicos da empresa.</p>
+        <div class="fields">
+          <div class="field">
+            <label>Nome da incorporadora</label>
+            <input id="incNome" type="text" required placeholder="Ex.: Plenge Incorporações" />
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>CNPJ</label>
+              <input id="incCnpj" type="text" required maxlength="18" placeholder="00.000.000/0000-00" />
+            </div>
+            <div class="field">
+              <label>Telefone <span class="opt">(opcional)</span></label>
+              <input id="incTelefone" type="text" placeholder="(11) 99999-9999" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Email do gestor</label>
+            <input id="incEmail" type="email" readonly />
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2 -->
+      <section class="step hidden" data-step="2">
+        <h2>Primeiro empreendimento</h2>
+        <p class="sub">Cadastre o empreendimento principal. Depois é possível adicionar mais.</p>
+        <div class="fields">
+          <div class="field">
+            <label>Nome do empreendimento</label>
+            <input id="empNome" type="text" required placeholder="Ex.: Edifício Aurora" />
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Status</label>
+              <select id="empStatus" required>
+                <option value="">Selecione…</option>
+                <option value="Em vendas">Em vendas</option>
+                <option value="Lançamento">Lançamento</option>
+                <option value="Entregue">Entregue</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Previsão de entrega <span class="opt">(opcional)</span></label>
+              <input id="empEntrega" type="date" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Endereço <span class="opt">(opcional)</span></label>
+            <input id="empEndereco" type="text" placeholder="Rua, número, bairro, cidade — UF" />
+          </div>
+          <div class="row-3">
+            <div class="field">
+              <label>Ticket médio R$ <span class="opt">(opcional)</span></label>
+              <input id="empTicket" type="number" min="0" step="1000" placeholder="500000" />
+            </div>
+            <div class="field">
+              <label>VGV total R$ <span class="opt">(opcional)</span></label>
+              <input id="empVgv" type="number" min="0" step="10000" placeholder="50000000" />
+            </div>
+            <div class="field">
+              <label>VGF R$ <span class="opt">(opcional)</span></label>
+              <input id="empVgf" type="number" min="0" step="10000" placeholder="30000000" />
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Total de unidades <span class="opt">(opcional)</span></label>
+              <input id="empUnidades" type="number" min="0" step="1" placeholder="120" />
+            </div>
+            <div class="field">
+              <label>Total de blocos/torres <span class="opt">(opcional)</span></label>
+              <input id="empBlocos" type="number" min="0" step="1" placeholder="3" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3 -->
+      <section class="step hidden" data-step="3">
+        <h2>Política de crédito</h2>
+        <p class="sub">Critérios usados pelo motor de análise. Os valores já vêm com defaults — ajuste se quiser.</p>
+        <div class="fields">
+          <div class="row-2">
+            <div class="field">
+              <label>Score mínimo</label>
+              <input id="polScore" type="number" min="0" max="1000" value="400" required />
+              <span class="hint">Score mínimo aceito (0–1000).</span>
+            </div>
+            <div class="field">
+              <label>Renda mínima R$</label>
+              <input id="polRenda" type="number" min="0" step="100" value="3000" required />
+              <span class="hint">Renda total mínima dos proponentes.</span>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Endividamento máximo R$</label>
+              <input id="polEndividamento" type="number" min="0" step="500" value="30000" required />
+              <span class="hint">Soma de dívidas tolerada.</span>
+            </div>
+            <div class="field">
+              <label>Comprometimento máximo %</label>
+              <input id="polComprometimento" type="number" min="0" max="100" step="0.5" value="30" required />
+              <span class="hint">% da renda que a parcela pode consumir.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Prazo máximo (meses)</label>
+            <input id="polPrazo" type="number" min="12" max="420" step="12" value="360" required />
+            <span class="hint">Prazo máximo do financiamento.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4 -->
+      <section class="step hidden" data-step="4">
+        <h2>Primeiro(s) corretor(es)</h2>
+        <p class="sub">Cadastre quem usa o bot. Você pode adicionar até 5 agora — mais depois pelo painel.</p>
+        <div class="corretores-list" id="corretoresList"></div>
+        <button type="button" class="add-corretor" id="btnAddCorretor">+ Adicionar outro corretor</button>
+      </section>
+
+      <!-- Done -->
+      <section class="step hidden" data-step="done">
+        <div class="done">
+          <div class="success-mark">✓</div>
+          <h2>Tudo pronto!</h2>
+          <p>Seu ambiente está configurado. Vamos para o dashboard.</p>
+          <a class="btn btn-primary" href="dashboard.html">Ir para o dashboard →</a>
+        </div>
+      </section>
+
+      <!-- Messages + nav -->
+      <div id="msg" class="msg"></div>
+      <div class="actions" id="actions">
+        <button class="btn btn-back" id="btnBack">← Anterior</button>
+        <button class="btn btn-primary" id="btnNext">Próximo →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script>
+    // ─────────────────────────────────────────
+    // ESTADO
+    // ─────────────────────────────────────────
+    const supa = window.gateoneSupabase;
+    let user = null;
+    let incorporadora = null;     // row do DB
+    let empreendimentoId = null;  // criado no passo 2
+    let politicaId = null;        // criado no passo 3
+    let currentStep = 1;
+    const MAX_CORRETORES = 5;
+
+    const msg = document.getElementById('msg');
+    const aviso = (t, tipo='err') => { msg.textContent = t; msg.className = `msg ${tipo} show`; };
+    const limparMsg = () => { msg.className = 'msg'; msg.textContent = ''; };
+
+    // ─────────────────────────────────────────
+    // BOOTSTRAP
+    // ─────────────────────────────────────────
+    (async () => {
+      user = await window.exigirLogin();
+      if (!user) return;
+
+      // Busca a incorporadora pelo email
+      const { data, error } = await supa
+        .from('incorporadoras')
+        .select('id, nome, email, ativa, cnpj, telefone, onboarding_completo')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        aviso('Erro ao carregar dados: ' + error.message);
+        return;
+      }
+
+      if (data) {
+        if (data.onboarding_completo) {
+          window.location.replace('dashboard.html');
+          return;
+        }
+        incorporadora = data;
+        // preenche o que já existir
+        document.getElementById('incNome').value = data.nome && data.nome !== 'A definir' ? data.nome : '';
+        document.getElementById('incCnpj').value = data.cnpj ? maskCnpj(data.cnpj) : '';
+        document.getElementById('incTelefone').value = data.telefone || '';
+      } else {
+        // Sem registro ainda — cria stub
+        const token = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ('t-' + Date.now());
+        const { data: created, error: errIns } = await supa
+          .from('incorporadoras')
+          .insert({ nome: 'A definir', token, email: user.email, ativa: true })
+          .select('id, nome, email, ativa, cnpj, telefone, onboarding_completo')
+          .single();
+        if (errIns) { aviso('Não foi possível inicializar sua conta: ' + errIns.message); return; }
+        incorporadora = created;
+      }
+
+      document.getElementById('incEmail').value = user.email;
+      renderCorretores(); // já cria 1 card vazio
+      showStep(1);
+    })();
+
+    // ─────────────────────────────────────────
+    // CNPJ MASK
+    // ─────────────────────────────────────────
+    function maskCnpj(v) {
+      const d = String(v).replace(/\D/g, '').slice(0, 14);
+      return d
+        .replace(/^(\d{2})(\d)/, '$1.$2')
+        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    document.getElementById('incCnpj').addEventListener('input', (e) => {
+      e.target.value = maskCnpj(e.target.value);
+    });
+
+    // ─────────────────────────────────────────
+    // PROGRESS / SHOW STEP
+    // ─────────────────────────────────────────
+    function showStep(n) {
+      currentStep = n;
+      document.querySelectorAll('.step').forEach((el) => el.classList.add('hidden'));
+      document.querySelector(`.step[data-step="${n}"]`).classList.remove('hidden');
+
+      // Progress (apenas para passos numéricos)
+      if (n !== 'done') {
+        document.querySelectorAll('.step-pill').forEach((p) => {
+          const ps = parseInt(p.dataset.step, 10);
+          p.classList.remove('active', 'done');
+          if (ps < n) p.classList.add('done');
+          else if (ps === n) p.classList.add('active');
+        });
+        const lines = document.querySelectorAll('.step-line');
+        lines.forEach((l, i) => l.classList.toggle('done', i + 1 < n));
+      }
+
+      // Nav buttons
+      const actions = document.getElementById('actions');
+      const btnBack = document.getElementById('btnBack');
+      const btnNext = document.getElementById('btnNext');
+      if (n === 'done') {
+        actions.style.display = 'none';
+      } else {
+        actions.style.display = '';
+        btnBack.style.visibility = n === 1 ? 'hidden' : 'visible';
+        btnNext.textContent = n === 4 ? 'Finalizar →' : 'Próximo →';
+      }
+      limparMsg();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ─────────────────────────────────────────
+    // CORRETORES — render dinâmico
+    // ─────────────────────────────────────────
+    const corretoresState = [{ nome: '', telefone: '', email: '' }];
+
+    function renderCorretores() {
+      const list = document.getElementById('corretoresList');
+      list.innerHTML = corretoresState.map((c, i) => `
+        <div class="corretor-card" data-i="${i}">
+          ${corretoresState.length > 1 ? `<button class="corretor-remove" type="button" data-remove="${i}" aria-label="Remover">×</button>` : ''}
+          <div class="corretor-num">Corretor ${i + 1}</div>
+          <div class="fields">
+            <div class="field">
+              <label>Nome completo</label>
+              <input type="text" data-f="nome" data-i="${i}" value="${escapeHtml(c.nome)}" required />
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>WhatsApp (somente números, com DDI+DDD)</label>
+                <input type="text" data-f="telefone" data-i="${i}" value="${escapeHtml(c.telefone)}" required placeholder="5511999998888" />
+                <span class="hint">Número que o corretor usa para mandar mensagem no bot.</span>
+              </div>
+              <div class="field">
+                <label>Email <span class="opt">(opcional)</span></label>
+                <input type="email" data-f="email" data-i="${i}" value="${escapeHtml(c.email)}" />
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('btnAddCorretor').disabled = corretoresState.length >= MAX_CORRETORES;
+
+      // bind input → state
+      list.querySelectorAll('input[data-f]').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const i = parseInt(e.target.dataset.i, 10);
+          const f = e.target.dataset.f;
+          if (f === 'telefone') {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 15);
+          }
+          corretoresState[i][f] = e.target.value;
+        });
+      });
+      list.querySelectorAll('[data-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.remove, 10);
+          corretoresState.splice(i, 1);
+          renderCorretores();
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    document.getElementById('btnAddCorretor').addEventListener('click', () => {
+      if (corretoresState.length >= MAX_CORRETORES) return;
+      corretoresState.push({ nome: '', telefone: '', email: '' });
+      renderCorretores();
+    });
+
+    // ─────────────────────────────────────────
+    // SAVE
+    // ─────────────────────────────────────────
+    async function saveStep1() {
+      const nome = document.getElementById('incNome').value.trim();
+      const cnpj = document.getElementById('incCnpj').value.replace(/\D/g, '');
+      const telefone = document.getElementById('incTelefone').value.trim();
+      if (!nome) return aviso('Informe o nome da incorporadora.');
+      if (cnpj.length !== 14) return aviso('CNPJ inválido — informe os 14 dígitos.');
+
+      const { data, error } = await supa
+        .from('incorporadoras')
+        .update({ nome, cnpj, telefone: telefone || null })
+        .eq('id', incorporadora.id)
+        .select('id, nome, email, ativa, cnpj, telefone, onboarding_completo')
+        .single();
+      if (error) { aviso('Erro ao salvar: ' + error.message); return false; }
+      incorporadora = data;
+      return true;
+    }
+
+    async function saveStep2() {
+      const nome = document.getElementById('empNome').value.trim();
+      const status = document.getElementById('empStatus').value;
+      const endereco = document.getElementById('empEndereco').value.trim();
+      const ticket = parseFloat(document.getElementById('empTicket').value) || null;
+      const vgv = parseFloat(document.getElementById('empVgv').value) || null;
+      const vgf = parseFloat(document.getElementById('empVgf').value) || null;
+      const entrega = document.getElementById('empEntrega').value || null;
+      const unidades = parseInt(document.getElementById('empUnidades').value, 10) || null;
+      const blocos = parseInt(document.getElementById('empBlocos').value, 10) || null;
+
+      if (!nome) return aviso('Informe o nome do empreendimento.');
+      if (!status) return aviso('Selecione o status do empreendimento.');
+
+      const payload = {
+        incorporadora_id: incorporadora.id,
+        nome, status,
+        endereco: endereco || null,
+        ticket_medio: ticket,
+        vgv_total: vgv,
+        vgf,
+        previsao_entrega: entrega,
+        total_unidades: unidades,
+        total_blocos: blocos,
+      };
+
+      let resp;
+      if (empreendimentoId) {
+        resp = await supa.from('empreendimentos').update(payload).eq('id', empreendimentoId).select('id').single();
+      } else {
+        resp = await supa.from('empreendimentos').insert(payload).select('id').single();
+      }
+      if (resp.error) { aviso('Erro ao salvar empreendimento: ' + resp.error.message); return false; }
+      empreendimentoId = resp.data.id;
+      return true;
+    }
+
+    async function saveStep3() {
+      const score = parseInt(document.getElementById('polScore').value, 10);
+      const endividamento = parseFloat(document.getElementById('polEndividamento').value);
+      const comprometimento = parseFloat(document.getElementById('polComprometimento').value);
+      const renda = parseFloat(document.getElementById('polRenda').value);
+      const prazoMeses = parseInt(document.getElementById('polPrazo').value, 10);
+
+      if (Number.isNaN(score) || Number.isNaN(endividamento) || Number.isNaN(comprometimento) || Number.isNaN(renda) || Number.isNaN(prazoMeses)) {
+        return aviso('Preencha todos os campos da política.');
+      }
+
+      const payload = {
+        incorporadora_id: incorporadora.id,
+        empreendimento_id: empreendimentoId,
+        score_minimo: score,
+        endividamento_maximo: endividamento,
+        comprometimento_maximo: comprometimento / 100,
+        renda_minima: renda,
+        prazo_validade_dias: 30,
+        prazo_maximo_meses: prazoMeses,
+      };
+
+      let resp;
+      if (politicaId) {
+        resp = await supa.from('politicas_credito').update(payload).eq('id', politicaId).select('id').single();
+      } else {
+        resp = await supa.from('politicas_credito').insert(payload).select('id').single();
+      }
+      if (resp.error) { aviso('Erro ao salvar política: ' + resp.error.message); return false; }
+      politicaId = resp.data.id;
+      return true;
+    }
+
+    async function saveStep4() {
+      // valida
+      for (let i = 0; i < corretoresState.length; i++) {
+        const c = corretoresState[i];
+        if (!c.nome?.trim()) return aviso(`Corretor ${i + 1}: informe o nome.`);
+        if (!c.telefone?.trim() || c.telefone.replace(/\D/g, '').length < 12) {
+          return aviso(`Corretor ${i + 1}: telefone deve ter DDI + DDD + número (mín. 12 dígitos).`);
+        }
+      }
+
+      const linhas = corretoresState.map((c) => ({
+        telefone: c.telefone.replace(/\D/g, ''),
+        incorporadora_id: incorporadora.id,
+        nome: c.nome.trim(),
+        ativo: true,
+      }));
+
+      const { error } = await supa.from('corretores').upsert(linhas, { onConflict: 'telefone', ignoreDuplicates: false });
+      if (error) { aviso('Erro ao salvar corretores: ' + error.message); return false; }
+      return true;
+    }
+
+    // ─────────────────────────────────────────
+    // NAVEGAÇÃO
+    // ─────────────────────────────────────────
+    document.getElementById('btnNext').addEventListener('click', async () => {
+      const btn = document.getElementById('btnNext');
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Salvando…';
+      try {
+        let ok = false;
+        if (currentStep === 1)      ok = await saveStep1();
+        else if (currentStep === 2) ok = await saveStep2();
+        else if (currentStep === 3) ok = await saveStep3();
+        else if (currentStep === 4) ok = await saveStep4();
+        if (!ok) return;
+
+        if (currentStep < 4) {
+          showStep(currentStep + 1);
+        } else {
+          // Finalizar
+          const { error } = await supa
+            .from('incorporadoras')
+            .update({ onboarding_completo: true })
+            .eq('id', incorporadora.id);
+          if (error) { aviso('Erro ao concluir: ' + error.message); return; }
+          showStep('done');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+
+    document.getElementById('btnBack').addEventListener('click', () => {
+      if (currentStep > 1) showStep(currentStep - 1);
+    });
+  </script>
+</body>
+</html>

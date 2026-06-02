@@ -29,7 +29,7 @@ window.buscarIncorporadoraDoUsuario = async function (user) {
   if (!user?.email) return null;
   const { data, error } = await window.gateoneSupabase
     .from('incorporadoras')
-    .select('id, nome, email, ativa')
+    .select('id, nome, email, ativa, onboarding_completo')
     .eq('email', user.email)
     .eq('ativa', true)
     .maybeSingle();
