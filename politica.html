@@ -98,7 +98,9 @@
       window.preencherUsuarioSidebar(user);
       incorp = await window.buscarIncorporadoraDoUsuario(user);
       if (!incorp) {
-        window.location.replace('onboarding.html');
+        aviso(msgGlobal, 'Conta sem incorporadora vinculada. Configure sua conta no onboarding.', 'err');
+        const form = document.getElementById('formPolitica');
+        if (form) form.style.display = 'none';
         return;
       }
       await carregar();

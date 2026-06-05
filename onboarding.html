@@ -704,28 +704,46 @@
         if (currentStep < 4) {
           showStep(currentStep + 1);
         } else {
-          // Finalizar — UPDATE precisa devolver a linha atualizada,
-          // senão RLS pode estar bloqueando silenciosamente
-          const { data: updated, error } = await supa
-            .from('incorporadoras')
-            .update({ onboarding_completo: true })
-            .eq('id', incorporadora.id)
-            .select('id, onboarding_completo')
-            .maybeSingle();
+          // Finalizar — tenta 3 estratégias até confirmar que o registro do usuário
+          // ficou com onboarding_completo=true + email correto.
+          const tentar = async (label, builder) => {
+            const { data, error } = await builder()
+              .update({ onboarding_completo: true, email: user.email })
+              .select('id, email, onboarding_completo')
+              .maybeSingle();
+            console.log(`[ONBOARDING] tentativa ${label}:`, { data, error: error?.message });
+            return data && data.onboarding_completo === true ? data : null;
+          };
 
-          if (error) {
-            console.error('[ONBOARDING] erro ao concluir:', error);
-            aviso('Erro ao concluir: ' + error.message);
-            return;
+          let finalRow = null;
+
+          // 1. Por id (preferencial — já temos o stub em memória)
+          finalRow = await tentar('por id', () =>
+            supa.from('incorporadoras').eq('id', incorporadora.id)
+          );
+
+          // 2. Por email (caso o id em memória esteja errado/RLS bloqueie por id)
+          if (!finalRow) {
+            finalRow = await tentar('por email', () =>
+              supa.from('incorporadoras').ilike('email', user.email)
+            );
           }
-          if (!updated || updated.onboarding_completo !== true) {
-            console.error('[ONBOARDING] UPDATE retornou 0 linhas — provável bloqueio RLS', { updated });
+
+          // 3. Por stub sem email (caso o stub tenha sido criado sem email)
+          if (!finalRow) {
+            finalRow = await tentar('stub sem email', () =>
+              supa.from('incorporadoras').is('email', null)
+            );
+          }
+
+          if (!finalRow) {
+            console.error('[ONBOARDING] nenhuma estratégia conseguiu confirmar o UPDATE — provável bloqueio RLS');
             aviso('Não foi possível concluir o onboarding (verifique permissões). Recarregue e tente novamente.');
             return;
           }
 
           // Atualiza estado local pra evitar leitura velha em transições subsequentes
-          incorporadora.onboarding_completo = true;
+          incorporadora = { ...incorporadora, ...finalRow };
           showStep('done');
         }
       } finally {

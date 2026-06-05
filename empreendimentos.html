@@ -443,7 +443,12 @@
       window.preencherUsuarioSidebar(user);
       incorp = await window.buscarIncorporadoraDoUsuario(user);
       if (!incorp) {
-        window.location.replace('onboarding.html');
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <h3>Conta sem incorporadora vinculada</h3>
+            <p>Configure sua incorporadora para começar a cadastrar empreendimentos.</p>
+            <a class="btn btn-orange" href="onboarding.html">Configurar agora →</a>
+          </div>`;
         return;
       }
       await carregarCorretores();
