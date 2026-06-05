@@ -595,12 +595,18 @@
       if (!nome) return aviso('Informe o nome do empreendimento.');
       if (!status) return aviso('Selecione o status do empreendimento.');
 
+      // Diagnóstico: imprime no console as colunas reais da tabela empreendimentos
+      try {
+        const { data: amostra } = await supa.from('empreendimentos').select('*').limit(1);
+        console.log('[ONBOARDING] colunas empreendimentos:', Object.keys(amostra?.[0] ?? {}));
+      } catch (_) { /* diagnóstico — não bloqueia o fluxo */ }
+
       const payload = {
         incorporadora_id: incorporadora.id,
         nome, status,
         endereco: endereco || null,
         ticket_medio: ticket,
-        vgv_total: vgv,
+        vgv,
         vgf,
         previsao_entrega: entrega,
         total_unidades: unidades,
