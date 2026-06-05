@@ -443,8 +443,7 @@
       window.preencherUsuarioSidebar(user);
       incorp = await window.buscarIncorporadoraDoUsuario(user);
       if (!incorp) {
-        grid.innerHTML = '';
-        aviso(msgGlobal, 'Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
+        window.location.replace('onboarding.html');
         return;
       }
       await carregarCorretores();

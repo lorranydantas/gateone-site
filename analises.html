@@ -125,8 +125,8 @@
       window.preencherUsuarioSidebar(user);
       incorp = await window.buscarIncorporadoraDoUsuario(user);
       if (!incorp) {
-        aviso('Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
-        tbody.innerHTML = '';
+        // Sem vínculo → leva para onboarding ao invés de mensagem morta
+        window.location.replace('onboarding.html');
         return;
       }
       carregar();

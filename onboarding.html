@@ -566,9 +566,11 @@
       if (!nome) return aviso('Informe o nome da incorporadora.');
       if (cnpj.length !== 14) return aviso('CNPJ inválido — informe os 14 dígitos.');
 
+      // Reforça email no UPDATE para garantir que o registro seja localizável
+      // pelo dashboard mesmo em casos de stub criado com email inconsistente.
       const { data, error } = await supa
         .from('incorporadoras')
-        .update({ nome, cnpj, telefone: telefone || null })
+        .update({ nome, cnpj, telefone: telefone || null, email: user.email })
         .eq('id', incorporadora.id)
         .select('id, nome, email, ativa, cnpj, telefone, onboarding_completo')
         .single();

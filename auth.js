@@ -26,16 +26,43 @@ window.sair = async function () {
 // --- Buscar incorporadora vinculada ao usuário logado ---
 // (a tabela `incorporadoras` precisa ter a coluna `email` populada com o email do ADM)
 window.buscarIncorporadoraDoUsuario = async function (user) {
-  if (!user?.email) return null;
-  const { data, error } = await window.gateoneSupabase
+  if (!user?.email) {
+    console.warn('[AUTH] buscarIncorporadoraDoUsuario: usuário sem email');
+    return null;
+  }
+  const supa = window.gateoneSupabase;
+
+  // 1. Match exato pelo email
+  let { data, error } = await supa
     .from('incorporadoras')
     .select('id, nome, email, ativa, onboarding_completo')
     .eq('email', user.email)
-    .eq('ativa', true)
     .maybeSingle();
+
   if (error) {
-    console.error('Erro buscando incorporadora:', error.message);
+    console.error('[AUTH] erro buscando incorporadora por email:', error.message);
     return null;
+  }
+
+  // 2. Fallback case-insensitive (cobre caso de email com casing diferente no banco)
+  if (!data) {
+    const { data: data2 } = await supa
+      .from('incorporadoras')
+      .select('id, nome, email, ativa, onboarding_completo')
+      .ilike('email', user.email)
+      .maybeSingle();
+    if (data2) {
+      console.warn('[AUTH] incorporadora encontrada por casing diferente:', { authEmail: user.email, dbEmail: data2.email });
+      data = data2;
+    }
+  }
+
+  if (!data) {
+    console.warn('[AUTH] nenhuma incorporadora vinculada ao email', user.email);
+    return null;
+  }
+  if (data.ativa === false) {
+    console.warn('[AUTH] incorporadora encontrada mas marcada como inativa:', data.id);
   }
   return data;
 };
