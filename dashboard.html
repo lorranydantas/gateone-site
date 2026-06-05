@@ -392,12 +392,24 @@
     });
 
     // --- Bootstrap ---
+    // Retry: contorna propagação eventual após o UPDATE do onboarding
+    const carregarIncorporadoraComRetry = async (user, tentativas = 3) => {
+      for (let i = 0; i < tentativas; i++) {
+        const inc = await window.buscarIncorporadoraDoUsuario(user);
+        if (inc && inc.onboarding_completo === true) return inc;
+        if (i < tentativas - 1) await new Promise(r => setTimeout(r, 500));
+        // se onboarding_completo ainda é false, ainda dá uma chance dos retries
+        if (inc && i === tentativas - 1) return inc;
+      }
+      return null;
+    };
+
     (async () => {
       const user = await window.exigirLogin();
       if (!user) return;
       window.preencherUsuarioSidebar(user);
 
-      incorporadora = await window.buscarIncorporadoraDoUsuario(user);
+      incorporadora = await carregarIncorporadoraComRetry(user);
       if (!incorporadora) {
         // Sem incorporadora vinculada → onboarding cria/configura a partir do email
         window.location.replace('onboarding.html');

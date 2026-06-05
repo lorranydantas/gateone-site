@@ -696,12 +696,28 @@
         if (currentStep < 4) {
           showStep(currentStep + 1);
         } else {
-          // Finalizar
-          const { error } = await supa
+          // Finalizar — UPDATE precisa devolver a linha atualizada,
+          // senão RLS pode estar bloqueando silenciosamente
+          const { data: updated, error } = await supa
             .from('incorporadoras')
             .update({ onboarding_completo: true })
-            .eq('id', incorporadora.id);
-          if (error) { aviso('Erro ao concluir: ' + error.message); return; }
+            .eq('id', incorporadora.id)
+            .select('id, onboarding_completo')
+            .maybeSingle();
+
+          if (error) {
+            console.error('[ONBOARDING] erro ao concluir:', error);
+            aviso('Erro ao concluir: ' + error.message);
+            return;
+          }
+          if (!updated || updated.onboarding_completo !== true) {
+            console.error('[ONBOARDING] UPDATE retornou 0 linhas — provável bloqueio RLS', { updated });
+            aviso('Não foi possível concluir o onboarding (verifique permissões). Recarregue e tente novamente.');
+            return;
+          }
+
+          // Atualiza estado local pra evitar leitura velha em transições subsequentes
+          incorporadora.onboarding_completo = true;
           showStep('done');
         }
       } finally {
