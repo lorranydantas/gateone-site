@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empreendimentos — GATEONE</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    /* Page header */
+    .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+    .page-head h1{font-size:1.6rem;line-height:1.1;margin-bottom:4px}
+    .page-head p{color:var(--text-muted);font-size:.86rem}
+
+    /* Cards grid */
+    .emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .emp-card{
+      background:var(--card);border:1px solid var(--line);border-radius:16px;
+      padding:20px;display:flex;flex-direction:column;gap:12px;
+      transition:box-shadow .15s,border-color .15s;
+    }
+    .emp-card:hover{box-shadow:var(--shadow-md);border-color:var(--line-strong)}
+    .emp-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .emp-card-name{font-size:1rem;font-weight:600;color:var(--text);line-height:1.25}
+    .emp-card-rows{display:grid;gap:6px}
+    .emp-row{display:flex;justify-content:space-between;font-size:.78rem}
+    .emp-row .k{color:var(--text-muted)}
+    .emp-row .v{color:var(--text);font-weight:500}
+    .emp-card-actions{display:flex;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+    .emp-card-actions .btn{flex:1;padding:8px 12px;font-size:.78rem}
+
+    /* Status badges */
+    .status-badge{
+      display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;
+      font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+    }
+    .status-vendas{background:var(--blue-soft);color:var(--blue)}
+    .status-lancamento{background:var(--orange-soft);color:var(--orange)}
+    .status-entregue{background:var(--soft);color:var(--text-muted)}
+
+    /* Empty + loading */
+    .empty-state{
+      background:var(--card);border:1px dashed var(--line-strong);border-radius:16px;
+      padding:48px 24px;text-align:center;color:var(--text-muted);
+    }
+    .empty-state h3{font-size:1rem;margin-bottom:6px;color:var(--text)}
+    .empty-state p{font-size:.86rem;margin-bottom:18px}
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(6,11,22,.5);
+      display:none;align-items:center;justify-content:center;z-index:50;padding:24px;
+    }
+    .modal-backdrop.show{display:flex}
+    .modal{
+      background:var(--card);border-radius:18px;width:100%;max-width:640px;
+      max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.18);
+    }
+    .modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+    .modal-head h2{font-size:1.05rem}
+    .modal-close{background:none;border:none;font-size:1.4rem;color:var(--text-muted);cursor:pointer;line-height:1;padding:4px 8px;border-radius:8px}
+    .modal-close:hover{background:var(--soft);color:var(--text)}
+    .modal-body{padding:22px 24px;overflow-y:auto;display:grid;gap:14px}
+    .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+    .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:560px){.row-2{grid-template-columns:1fr}}
+    .field textarea{
+      font-family:inherit;font-size:.86rem;color:var(--text);
+      padding:10px 12px;border:1px solid var(--line-strong);border-radius:10px;
+      background:#fff;resize:vertical;min-height:80px;
+    }
+    .field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,88,255,.1)}
+
+    /* Corretores list (manage modal) */
+    .corretor-pick-list{display:grid;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px}
+    .corretor-pick{
+      display:flex;align-items:center;gap:12px;padding:12px 14px;
+      border:1px solid var(--line);border-radius:12px;background:var(--card-hover);
+      cursor:pointer;transition:border-color .12s,background .12s;
+    }
+    .corretor-pick:hover{border-color:var(--blue);background:var(--blue-soft)}
+    .corretor-pick input{width:18px;height:18px;accent-color:var(--blue);cursor:pointer}
+    .corretor-pick .info{flex:1;min-width:0}
+    .corretor-pick .nome{font-size:.88rem;font-weight:500;color:var(--text)}
+    .corretor-pick .tel{font-size:.74rem;color:var(--text-muted)}
+
+    .skeleton{
+      background:linear-gradient(90deg,var(--soft) 0%,var(--card-hover) 50%,var(--soft) 100%);
+      background-size:200% 100%;animation:shimmer 1.4s infinite;
+      border-radius:16px;height:180px;
+    }
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>Empreendimentos</h1>
+          <p>Gerencie os empreendimentos da sua incorporadora e os corretores vinculados a cada um.</p>
+        </div>
+        <button class="btn btn-orange" id="btnNovo">+ Novo empreendimento</button>
+      </div>
+
+      <div id="msgGlobal" class="msg"></div>
+
+      <div id="empGrid" class="emp-grid">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: criar/editar empreendimento -->
+  <div class="modal-backdrop" id="modalEmp">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalEmpTitulo">Novo empreendimento</h2>
+        <button class="modal-close" type="button" onclick="fecharModalEmp()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Nome do empreendimento</label>
+          <input id="fNome" type="text" placeholder="Ex.: Edifício Aurora" />
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="Em vendas">Em vendas</option>
+              <option value="Lançamento">Lançamento</option>
+              <option value="Entregue">Entregue</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Previsão de entrega</label>
+            <input id="fEntrega" type="date" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Endereço</label>
+          <input id="fEndereco" type="text" placeholder="Rua, número, bairro, cidade — UF" />
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Total de unidades</label>
+            <input id="fUnidades" type="number" min="0" step="1" placeholder="120" />
+          </div>
+          <div class="field">
+            <label>Total de blocos/torres</label>
+            <input id="fBlocos" type="number" min="0" step="1" placeholder="3" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Índice de correção</label>
+          <select id="fIndice">
+            <option value="INCC">INCC</option>
+            <option value="CUB">CUB</option>
+            <option value="IPCA">IPCA</option>
+            <option value="IGPM">IGPM</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Regras comerciais</label>
+          <textarea id="fRegras" rows="3" placeholder="Ex.: entrada mínima 20%, parcelas semestrais permitidas, FGTS aceito…"></textarea>
+        </div>
+        <div id="msgEmp" class="msg"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" type="button" onclick="fecharModalEmp()">Cancelar</button>
+        <button class="btn btn-orange" type="button" id="btnSalvarEmp">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: gerenciar corretores do empreendimento -->
+  <div class="modal-backdrop" id="modalCorr">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Gerenciar corretores — <span id="modalCorrNome">…</span></h2>
+        <button class="modal-close" type="button" onclick="fecharModalCorr()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:4px">
+          Marque os corretores que devem ter acesso a este empreendimento.
+        </p>
+        <div id="corretorPickList" class="corretor-pick-list">
+          <p class="empty-state" style="padding:20px">Carregando corretores…</p>
+        </div>
+        <div id="msgCorr" class="msg"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" type="button" onclick="fecharModalCorr()">Cancelar</button>
+        <button class="btn btn-orange" type="button" id="btnSalvarCorr">Salvar vínculos</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    window.renderSidebar('empreendimentos');
+    const supa = window.gateoneSupabase;
+    const msgGlobal = document.getElementById('msgGlobal');
+    const grid = document.getElementById('empGrid');
+
+    let incorp = null;
+    let empAtualId = null;       // id em edição no modalEmp
+    let corrEmpAtual = null;     // empreendimento atual no modalCorr
+
+    const aviso = (el, t, tipo='err') => { el.textContent = t; el.className = `msg ${tipo} show`; };
+    const limparMsg = (el) => { el.className = 'msg'; el.textContent = ''; };
+
+    const STATUS_CLASS = {
+      'Em vendas':   'status-vendas',
+      'Lançamento':  'status-lancamento',
+      'Entregue':    'status-entregue',
+    };
+
+    function fmtData(d){
+      if (!d) return '—';
+      const [y,m,_] = d.split('-');
+      return `${m}/${y}`;
+    }
+
+    function escapeHtml(s){
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function carregar(){
+      const { data, error } = await supa
+        .from('empreendimentos')
+        .select('id, nome, status, previsao_entrega, indice_correcao, total_unidades, endereco, total_blocos, regras_comerciais')
+        .eq('incorporadora_id', incorp.id)
+        .order('created_at', { ascending: false });
+
+      if (error) { aviso(msgGlobal, 'Erro ao carregar: ' + error.message); grid.innerHTML = ''; return; }
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <h3>Nenhum empreendimento ainda</h3>
+            <p>Cadastre seu primeiro empreendimento para começar a vincular corretores.</p>
+            <button class="btn btn-orange" onclick="abrirNovo()">+ Novo empreendimento</button>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = data.map(e => `
+        <div class="emp-card">
+          <div class="emp-card-head">
+            <div class="emp-card-name">${escapeHtml(e.nome)}</div>
+            <span class="status-badge ${STATUS_CLASS[e.status] || 'status-vendas'}">${escapeHtml(e.status || '—')}</span>
+          </div>
+          <div class="emp-card-rows">
+            <div class="emp-row"><span class="k">Entrega</span><span class="v">${fmtData(e.previsao_entrega)}</span></div>
+            <div class="emp-row"><span class="k">Índice correção</span><span class="v">${escapeHtml(e.indice_correcao || 'INCC')}</span></div>
+            <div class="emp-row"><span class="k">Unidades</span><span class="v">${e.total_unidades ?? '—'}</span></div>
+          </div>
+          <div class="emp-card-actions">
+            <button class="btn btn-ghost" data-act="edit" data-id="${e.id}">Editar</button>
+            <button class="btn btn-outline" data-act="corr" data-id="${e.id}" data-nome="${escapeHtml(e.nome)}">Corretores</button>
+          </div>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('button[data-act="edit"]').forEach(b => {
+        b.addEventListener('click', () => abrirEditar(b.dataset.id));
+      });
+      grid.querySelectorAll('button[data-act="corr"]').forEach(b => {
+        b.addEventListener('click', () => abrirCorretores(b.dataset.id, b.dataset.nome));
+      });
+    }
+
+    // ─── Modal empreendimento ─────────────
+    function abrirNovo(){
+      empAtualId = null;
+      document.getElementById('modalEmpTitulo').textContent = 'Novo empreendimento';
+      document.getElementById('fNome').value = '';
+      document.getElementById('fStatus').value = 'Em vendas';
+      document.getElementById('fEntrega').value = '';
+      document.getElementById('fEndereco').value = '';
+      document.getElementById('fUnidades').value = '';
+      document.getElementById('fBlocos').value = '';
+      document.getElementById('fIndice').value = 'INCC';
+      document.getElementById('fRegras').value = '';
+      limparMsg(document.getElementById('msgEmp'));
+      document.getElementById('modalEmp').classList.add('show');
+    }
+
+    async function abrirEditar(id){
+      const { data, error } = await supa
+        .from('empreendimentos')
+        .select('id, nome, status, previsao_entrega, indice_correcao, total_unidades, total_blocos, endereco, regras_comerciais')
+        .eq('id', id).maybeSingle();
+      if (error || !data) { aviso(msgGlobal, 'Erro ao carregar empreendimento.'); return; }
+      empAtualId = id;
+      document.getElementById('modalEmpTitulo').textContent = 'Editar empreendimento';
+      document.getElementById('fNome').value = data.nome || '';
+      document.getElementById('fStatus').value = data.status || 'Em vendas';
+      document.getElementById('fEntrega').value = data.previsao_entrega || '';
+      document.getElementById('fEndereco').value = data.endereco || '';
+      document.getElementById('fUnidades').value = data.total_unidades ?? '';
+      document.getElementById('fBlocos').value = data.total_blocos ?? '';
+      document.getElementById('fIndice').value = data.indice_correcao || 'INCC';
+      document.getElementById('fRegras').value = data.regras_comerciais || '';
+      limparMsg(document.getElementById('msgEmp'));
+      document.getElementById('modalEmp').classList.add('show');
+    }
+
+    function fecharModalEmp(){ document.getElementById('modalEmp').classList.remove('show'); }
+
+    document.getElementById('btnNovo').addEventListener('click', abrirNovo);
+
+    document.getElementById('btnSalvarEmp').addEventListener('click', async () => {
+      const msgEl = document.getElementById('msgEmp');
+      limparMsg(msgEl);
+      const nome = document.getElementById('fNome').value.trim();
+      const status = document.getElementById('fStatus').value;
+      if (!nome) { aviso(msgEl, 'Informe o nome do empreendimento.'); return; }
+
+      const payload = {
+        incorporadora_id: incorp.id,
+        nome, status,
+        previsao_entrega: document.getElementById('fEntrega').value || null,
+        endereco: document.getElementById('fEndereco').value.trim() || null,
+        total_unidades: parseInt(document.getElementById('fUnidades').value, 10) || null,
+        total_blocos: parseInt(document.getElementById('fBlocos').value, 10) || null,
+        indice_correcao: document.getElementById('fIndice').value || 'INCC',
+        regras_comerciais: document.getElementById('fRegras').value.trim() || null,
+      };
+
+      const btn = document.getElementById('btnSalvarEmp');
+      btn.disabled = true; btn.textContent = 'Salvando…';
+
+      const resp = empAtualId
+        ? await supa.from('empreendimentos').update(payload).eq('id', empAtualId).select('id').single()
+        : await supa.from('empreendimentos').insert(payload).select('id').single();
+
+      btn.disabled = false; btn.textContent = 'Salvar';
+
+      if (resp.error) { aviso(msgEl, 'Erro ao salvar: ' + resp.error.message); return; }
+      fecharModalEmp();
+      await carregar();
+    });
+
+    // ─── Modal corretores ─────────────────
+    async function abrirCorretores(empId, empNome){
+      corrEmpAtual = empId;
+      document.getElementById('modalCorrNome').textContent = empNome;
+      limparMsg(document.getElementById('msgCorr'));
+      const lista = document.getElementById('corretorPickList');
+      lista.innerHTML = '<p style="padding:20px;color:var(--text-muted);text-align:center;font-size:.85rem">Carregando…</p>';
+      document.getElementById('modalCorr').classList.add('show');
+
+      // 1. todos os corretores ativos da incorporadora
+      const { data: corretores, error: e1 } = await supa
+        .from('corretores')
+        .select('id, nome, telefone')
+        .eq('incorporadora_id', incorp.id)
+        .eq('ativo', true)
+        .order('nome', { ascending: true });
+      if (e1) { lista.innerHTML = `<p style="padding:20px;color:var(--orange-deep)">Erro: ${e1.message}</p>`; return; }
+
+      // 2. vínculos atuais desse empreendimento
+      const { data: vinculos, error: e2 } = await supa
+        .from('corretor_empreendimento')
+        .select('corretor_id')
+        .eq('empreendimento_id', empId);
+      if (e2) { lista.innerHTML = `<p style="padding:20px;color:var(--orange-deep)">Erro: ${e2.message}</p>`; return; }
+
+      const vinculados = new Set((vinculos || []).map(v => v.corretor_id));
+
+      if (!corretores || corretores.length === 0) {
+        lista.innerHTML = `
+          <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:.86rem">
+            Nenhum corretor cadastrado ainda.<br>
+            <a href="corretores.html" style="color:var(--blue);text-decoration:none;font-weight:500">Cadastrar corretores →</a>
+          </div>`;
+        return;
+      }
+
+      lista.innerHTML = corretores.map(c => `
+        <label class="corretor-pick" data-id="${c.id}">
+          <input type="checkbox" ${vinculados.has(c.id) ? 'checked' : ''} />
+          <div class="info">
+            <div class="nome">${escapeHtml(c.nome)}</div>
+            <div class="tel">${escapeHtml(c.telefone || '')}</div>
+          </div>
+        </label>
+      `).join('');
+    }
+
+    function fecharModalCorr(){ document.getElementById('modalCorr').classList.remove('show'); }
+
+    document.getElementById('btnSalvarCorr').addEventListener('click', async () => {
+      if (!corrEmpAtual) return;
+      const msgEl = document.getElementById('msgCorr');
+      limparMsg(msgEl);
+      const btn = document.getElementById('btnSalvarCorr');
+      btn.disabled = true; btn.textContent = 'Salvando…';
+
+      const selecionados = Array.from(document.querySelectorAll('#corretorPickList .corretor-pick'))
+        .filter(el => el.querySelector('input').checked)
+        .map(el => el.dataset.id);
+
+      // Estratégia: deleta todos e re-insere
+      const { error: eDel } = await supa
+        .from('corretor_empreendimento')
+        .delete()
+        .eq('empreendimento_id', corrEmpAtual);
+      if (eDel) { btn.disabled = false; btn.textContent = 'Salvar vínculos'; aviso(msgEl, 'Erro: ' + eDel.message); return; }
+
+      if (selecionados.length > 0) {
+        const rows = selecionados.map(cid => ({
+          corretor_id: cid,
+          empreendimento_id: corrEmpAtual,
+        }));
+        const { error: eIns } = await supa.from('corretor_empreendimento').insert(rows);
+        if (eIns) { btn.disabled = false; btn.textContent = 'Salvar vínculos'; aviso(msgEl, 'Erro: ' + eIns.message); return; }
+      }
+
+      btn.disabled = false; btn.textContent = 'Salvar vínculos';
+      fecharModalCorr();
+    });
+
+    // expor para uso inline
+    window.abrirNovo = abrirNovo;
+
+    (async () => {
+      const user = await window.exigirLogin();
+      if (!user) return;
+      window.preencherUsuarioSidebar(user);
+      incorp = await window.buscarIncorporadoraDoUsuario(user);
+      if (!incorp) {
+        grid.innerHTML = '';
+        aviso(msgGlobal, 'Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
+        return;
+      }
+      await carregar();
+    })();
+  </script>
+</body>
+</html>

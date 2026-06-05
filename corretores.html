@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corretores — GATEONE</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    /* Page header */
+    .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+    .page-head h1{font-size:1.6rem;line-height:1.1;margin-bottom:4px}
+    .page-head p{color:var(--text-muted);font-size:.86rem}
+
+    /* Filters bar */
+    .filters{
+      display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+      background:var(--card);border:1px solid var(--line);border-radius:14px;
+      padding:14px 18px;margin-bottom:18px;
+    }
+    .filters .field{flex:1;min-width:220px;flex-direction:row;align-items:center;gap:10px}
+    .filters label{font-size:.78rem;color:var(--text-muted);font-weight:500;white-space:nowrap}
+    .filters select{
+      flex:1;font-size:.86rem;padding:8px 12px;border:1px solid var(--line-strong);
+      border-radius:10px;background:#fff;color:var(--text);
+    }
+    .filters select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,88,255,.1)}
+
+    /* Status badges */
+    .status-badge{
+      display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;
+      font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+    }
+    .status-ativo{background:var(--blue-soft);color:var(--blue)}
+    .status-inativo{background:var(--soft);color:var(--text-muted)}
+
+    /* Emp chip list inside row */
+    .emp-chips{display:flex;flex-wrap:wrap;gap:4px}
+    .emp-chip{
+      font-size:.72rem;padding:2px 8px;border-radius:999px;
+      background:var(--blue-soft);color:var(--blue);font-weight:500;
+    }
+    .emp-chip.muted{background:var(--soft);color:var(--text-muted)}
+
+    /* Action buttons */
+    .row-acts{display:flex;gap:6px}
+    .row-acts button{
+      background:transparent;border:1px solid var(--line-strong);
+      padding:6px 10px;border-radius:8px;font-size:.74rem;color:var(--text);
+      cursor:pointer;transition:border-color .12s,background .12s;
+    }
+    .row-acts button:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+    .row-acts button.danger:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-soft)}
+
+    .empty-state{
+      background:var(--card);border:1px dashed var(--line-strong);border-radius:16px;
+      padding:48px 24px;text-align:center;color:var(--text-muted);
+    }
+    .empty-state h3{font-size:1rem;margin-bottom:6px;color:var(--text)}
+    .empty-state p{font-size:.86rem;margin-bottom:18px}
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(6,11,22,.5);
+      display:none;align-items:center;justify-content:center;z-index:50;padding:24px;
+    }
+    .modal-backdrop.show{display:flex}
+    .modal{
+      background:var(--card);border-radius:18px;width:100%;max-width:640px;
+      max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.18);
+    }
+    .modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+    .modal-head h2{font-size:1.05rem}
+    .modal-close{background:none;border:none;font-size:1.4rem;color:var(--text-muted);cursor:pointer;line-height:1;padding:4px 8px;border-radius:8px}
+    .modal-close:hover{background:var(--soft);color:var(--text)}
+    .modal-body{padding:22px 24px;overflow-y:auto;display:grid;gap:14px}
+    .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+    .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:560px){.row-2{grid-template-columns:1fr}}
+
+    /* Multi-select empreendimentos */
+    .emp-pick-list{
+      display:grid;gap:6px;max-height:240px;overflow-y:auto;
+      border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--card-hover);
+    }
+    .emp-pick{
+      display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;
+      transition:background .12s;
+    }
+    .emp-pick:hover{background:var(--blue-soft)}
+    .emp-pick input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+    .emp-pick .nome{font-size:.86rem;color:var(--text)}
+    .emp-pick .st{font-size:.7rem;color:var(--text-muted);margin-left:auto}
+
+    /* Switch ativo */
+    .switch-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+    .switch{position:relative;display:inline-block;width:42px;height:24px}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;cursor:pointer;inset:0;background:var(--line-strong);transition:.2s;border-radius:24px}
+    .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:50%}
+    .switch input:checked + .slider{background:var(--blue)}
+    .switch input:checked + .slider:before{transform:translateX(18px)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>Corretores</h1>
+          <p>Cadastre e gerencie os corretores que usam o bot da sua incorporadora.</p>
+        </div>
+        <button class="btn btn-orange" id="btnNovo">+ Novo corretor</button>
+      </div>
+
+      <div id="msgGlobal" class="msg"></div>
+
+      <div class="filters">
+        <div class="field">
+          <label for="filtroEmp">Empreendimento:</label>
+          <select id="filtroEmp">
+            <option value="">Todos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>Email</th>
+              <th>Empreendimentos</th>
+              <th>Status</th>
+              <th style="text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: criar/editar corretor -->
+  <div class="modal-backdrop" id="modalCorr">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalTitulo">Novo corretor</h2>
+        <button class="modal-close" type="button" onclick="fecharModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Nome completo</label>
+          <input id="fNome" type="text" placeholder="João da Silva" />
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Telefone (WhatsApp)</label>
+            <input id="fTelefone" type="tel" placeholder="(11) 99999-9999" />
+            <span class="hint">Apenas dígitos serão salvos.</span>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input id="fEmail" type="email" placeholder="corretor@imobiliaria.com" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Empreendimentos com acesso</label>
+          <div id="empPickList" class="emp-pick-list">
+            <p style="padding:12px;text-align:center;color:var(--text-muted);font-size:.82rem">Carregando…</p>
+          </div>
+          <span class="hint">Marque os empreendimentos que este corretor pode oferecer.</span>
+        </div>
+        <div class="switch-row" id="rowAtivo" style="display:none">
+          <div>
+            <label style="font-size:.86rem;color:var(--text);font-weight:500">Corretor ativo</label>
+            <div class="hint" style="font-size:.72rem">Corretores inativos não recebem respostas do bot.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="fAtivo" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div id="msgForm" class="msg"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" type="button" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-orange" type="button" id="btnSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    window.renderSidebar('corretores');
+    const supa = window.gateoneSupabase;
+    const msgGlobal = document.getElementById('msgGlobal');
+    const tbody = document.getElementById('tbody');
+
+    let incorp = null;
+    let empMap = new Map();          // empId -> { id, nome, status }
+    let corretorAtualId = null;
+    let filtroAtual = '';            // empreendimento_id ou ''
+
+    const aviso = (el, t, tipo='err') => { el.textContent = t; el.className = `msg ${tipo} show`; };
+    const limparMsg = (el) => { el.className = 'msg'; el.textContent = ''; };
+
+    const onlyDigits = s => String(s ?? '').replace(/\D/g, '');
+    const formatPhone = d => {
+      const n = onlyDigits(d);
+      if (n.length === 11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`;
+      if (n.length === 10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`;
+      return d || '';
+    };
+
+    function escapeHtml(s){
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function carregarEmpreendimentos(){
+      const { data, error } = await supa
+        .from('empreendimentos')
+        .select('id, nome, status')
+        .eq('incorporadora_id', incorp.id)
+        .order('nome', { ascending: true });
+      if (error) { console.error(error); return; }
+      empMap = new Map((data || []).map(e => [e.id, e]));
+
+      const sel = document.getElementById('filtroEmp');
+      sel.innerHTML = `<option value="">Todos</option>` +
+        (data || []).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
+    }
+
+    async function carregar(){
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">Carregando…</td></tr>`;
+
+      let corretorIdsFiltro = null;
+      if (filtroAtual) {
+        const { data: vinc, error: eV } = await supa
+          .from('corretor_empreendimento')
+          .select('corretor_id')
+          .eq('empreendimento_id', filtroAtual);
+        if (eV) { aviso(msgGlobal, 'Erro: ' + eV.message); return; }
+        corretorIdsFiltro = (vinc || []).map(v => v.corretor_id);
+        if (corretorIdsFiltro.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">Nenhum corretor vinculado a este empreendimento.</td></tr>`;
+          return;
+        }
+      }
+
+      let q = supa
+        .from('corretores')
+        .select('id, nome, telefone, email, ativo')
+        .eq('incorporadora_id', incorp.id)
+        .order('nome', { ascending: true });
+      if (corretorIdsFiltro) q = q.in('id', corretorIdsFiltro);
+
+      const { data: corretores, error } = await q;
+      if (error) { aviso(msgGlobal, 'Erro ao carregar: ' + error.message); tbody.innerHTML = ''; return; }
+
+      if (!corretores || corretores.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="6" style="padding:0">
+            <div class="empty-state" style="border:none;border-radius:0">
+              <h3>Nenhum corretor cadastrado</h3>
+              <p>Cadastre seu primeiro corretor para que ele possa usar o bot.</p>
+              <button class="btn btn-orange" onclick="abrirNovo()">+ Novo corretor</button>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      // Buscar vínculos de todos os corretores listados
+      const ids = corretores.map(c => c.id);
+      const { data: vinculosTodos } = await supa
+        .from('corretor_empreendimento')
+        .select('corretor_id, empreendimento_id')
+        .in('corretor_id', ids);
+
+      const vincPorCorretor = new Map();
+      (vinculosTodos || []).forEach(v => {
+        if (!vincPorCorretor.has(v.corretor_id)) vincPorCorretor.set(v.corretor_id, []);
+        vincPorCorretor.get(v.corretor_id).push(v.empreendimento_id);
+      });
+
+      tbody.innerHTML = corretores.map(c => {
+        const empIds = vincPorCorretor.get(c.id) || [];
+        const chips = empIds.length === 0
+          ? `<span class="emp-chip muted">— nenhum —</span>`
+          : empIds.map(eid => {
+              const e = empMap.get(eid);
+              return e ? `<span class="emp-chip">${escapeHtml(e.nome)}</span>` : '';
+            }).join('');
+
+        return `
+          <tr>
+            <td>${escapeHtml(c.nome)}</td>
+            <td>${escapeHtml(formatPhone(c.telefone))}</td>
+            <td>${escapeHtml(c.email || '—')}</td>
+            <td><div class="emp-chips">${chips}</div></td>
+            <td><span class="status-badge ${c.ativo ? 'status-ativo' : 'status-inativo'}">${c.ativo ? 'Ativo' : 'Inativo'}</span></td>
+            <td style="text-align:right">
+              <div class="row-acts" style="justify-content:flex-end">
+                <button data-act="edit" data-id="${c.id}">Editar</button>
+                <button class="danger" data-act="toggle" data-id="${c.id}" data-ativo="${c.ativo}">${c.ativo ? 'Inativar' : 'Reativar'}</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('button[data-act="edit"]').forEach(b => {
+        b.addEventListener('click', () => abrirEditar(b.dataset.id));
+      });
+      tbody.querySelectorAll('button[data-act="toggle"]').forEach(b => {
+        b.addEventListener('click', () => toggleAtivo(b.dataset.id, b.dataset.ativo === 'true'));
+      });
+    }
+
+    // ─── Modal ─────────────────────────
+    function renderEmpPick(idsSelecionados = []){
+      const lista = document.getElementById('empPickList');
+      const set = new Set(idsSelecionados);
+      const arr = Array.from(empMap.values());
+      if (arr.length === 0) {
+        lista.innerHTML = `<p style="padding:12px;text-align:center;color:var(--text-muted);font-size:.82rem">Nenhum empreendimento cadastrado.</p>`;
+        return;
+      }
+      lista.innerHTML = arr.map(e => `
+        <label class="emp-pick" data-id="${e.id}">
+          <input type="checkbox" ${set.has(e.id) ? 'checked' : ''} />
+          <span class="nome">${escapeHtml(e.nome)}</span>
+          <span class="st">${escapeHtml(e.status || '')}</span>
+        </label>
+      `).join('');
+    }
+
+    function abrirNovo(){
+      corretorAtualId = null;
+      document.getElementById('modalTitulo').textContent = 'Novo corretor';
+      document.getElementById('fNome').value = '';
+      document.getElementById('fTelefone').value = '';
+      document.getElementById('fEmail').value = '';
+      document.getElementById('fAtivo').checked = true;
+      document.getElementById('rowAtivo').style.display = 'none';
+      renderEmpPick([]);
+      limparMsg(document.getElementById('msgForm'));
+      document.getElementById('modalCorr').classList.add('show');
+    }
+
+    async function abrirEditar(id){
+      const { data, error } = await supa
+        .from('corretores')
+        .select('id, nome, telefone, email, ativo')
+        .eq('id', id).maybeSingle();
+      if (error || !data) { aviso(msgGlobal, 'Erro ao carregar corretor.'); return; }
+      const { data: vinc } = await supa
+        .from('corretor_empreendimento')
+        .select('empreendimento_id')
+        .eq('corretor_id', id);
+      const ids = (vinc || []).map(v => v.empreendimento_id);
+
+      corretorAtualId = id;
+      document.getElementById('modalTitulo').textContent = 'Editar corretor';
+      document.getElementById('fNome').value = data.nome || '';
+      document.getElementById('fTelefone').value = formatPhone(data.telefone);
+      document.getElementById('fEmail').value = data.email || '';
+      document.getElementById('fAtivo').checked = !!data.ativo;
+      document.getElementById('rowAtivo').style.display = 'flex';
+      renderEmpPick(ids);
+      limparMsg(document.getElementById('msgForm'));
+      document.getElementById('modalCorr').classList.add('show');
+    }
+
+    function fecharModal(){ document.getElementById('modalCorr').classList.remove('show'); }
+    window.fecharModal = fecharModal;
+    window.abrirNovo = abrirNovo;
+
+    document.getElementById('btnNovo').addEventListener('click', abrirNovo);
+    document.getElementById('filtroEmp').addEventListener('change', e => {
+      filtroAtual = e.target.value;
+      carregar();
+    });
+
+    document.getElementById('btnSalvar').addEventListener('click', async () => {
+      const msgEl = document.getElementById('msgForm');
+      limparMsg(msgEl);
+      const nome = document.getElementById('fNome').value.trim();
+      const tel = onlyDigits(document.getElementById('fTelefone').value);
+      const email = document.getElementById('fEmail').value.trim();
+      const ativo = document.getElementById('fAtivo').checked;
+
+      if (!nome) { aviso(msgEl, 'Informe o nome do corretor.'); return; }
+      if (tel.length < 10 || tel.length > 13) { aviso(msgEl, 'Telefone inválido — informe DDD + número.'); return; }
+
+      const idsEmp = Array.from(document.querySelectorAll('#empPickList .emp-pick'))
+        .filter(el => el.querySelector('input').checked)
+        .map(el => el.dataset.id);
+
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true; btn.textContent = 'Salvando…';
+
+      let corretorId = corretorAtualId;
+      if (corretorId) {
+        const { error } = await supa.from('corretores')
+          .update({ nome, telefone: tel, email: email || null, ativo })
+          .eq('id', corretorId);
+        if (error) { btn.disabled = false; btn.textContent = 'Salvar'; aviso(msgEl, 'Erro: ' + error.message); return; }
+      } else {
+        const { data, error } = await supa.from('corretores')
+          .insert({
+            incorporadora_id: incorp.id,
+            nome, telefone: tel, email: email || null,
+            ativo: true, onboarding_enviado: false,
+          })
+          .select('id').single();
+        if (error) { btn.disabled = false; btn.textContent = 'Salvar'; aviso(msgEl, 'Erro: ' + error.message); return; }
+        corretorId = data.id;
+      }
+
+      // Sync vínculos: apaga todos e re-insere selecionados
+      const { error: eDel } = await supa
+        .from('corretor_empreendimento')
+        .delete()
+        .eq('corretor_id', corretorId);
+      if (eDel) { btn.disabled = false; btn.textContent = 'Salvar'; aviso(msgEl, 'Erro: ' + eDel.message); return; }
+
+      if (idsEmp.length > 0) {
+        const rows = idsEmp.map(eid => ({ corretor_id: corretorId, empreendimento_id: eid }));
+        const { error: eIns } = await supa.from('corretor_empreendimento').insert(rows);
+        if (eIns) { btn.disabled = false; btn.textContent = 'Salvar'; aviso(msgEl, 'Erro: ' + eIns.message); return; }
+      }
+
+      btn.disabled = false; btn.textContent = 'Salvar';
+      fecharModal();
+      await carregar();
+    });
+
+    async function toggleAtivo(id, atual){
+      const novo = !atual;
+      const acao = novo ? 'reativar' : 'inativar';
+      if (!confirm(`Deseja realmente ${acao} este corretor?`)) return;
+      const { error } = await supa.from('corretores').update({ ativo: novo }).eq('id', id);
+      if (error) { aviso(msgGlobal, 'Erro: ' + error.message); return; }
+      await carregar();
+    }
+
+    (async () => {
+      const user = await window.exigirLogin();
+      if (!user) return;
+      window.preencherUsuarioSidebar(user);
+      incorp = await window.buscarIncorporadoraDoUsuario(user);
+      if (!incorp) {
+        tbody.innerHTML = '';
+        aviso(msgGlobal, 'Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
+        return;
+      }
+      await carregarEmpreendimentos();
+      await carregar();
+    })();
+  </script>
+</body>
+</html>

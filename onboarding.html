@@ -285,6 +285,21 @@
               <input id="empBlocos" type="number" min="0" step="1" placeholder="3" />
             </div>
           </div>
+          <div class="field">
+            <label>Índice de correção <span class="opt">(opcional)</span></label>
+            <select id="empIndiceCorrecao">
+              <option value="INCC" selected>INCC</option>
+              <option value="CUB">CUB</option>
+              <option value="IPCA">IPCA</option>
+              <option value="IGPM">IGPM</option>
+            </select>
+            <span class="hint">Índice aplicado na correção das parcelas durante a obra.</span>
+          </div>
+          <div class="field">
+            <label>Regras comerciais <span class="opt">(opcional)</span></label>
+            <textarea id="empRegrasComerciais" rows="3" placeholder="Ex.: entrada mínima 20%, parcelas semestrais permitidas, FGTS aceito…"></textarea>
+            <span class="hint">Observações e regras comerciais específicas deste empreendimento.</span>
+          </div>
         </div>
       </section>
 
@@ -560,6 +575,8 @@
       const entrega = document.getElementById('empEntrega').value || null;
       const unidades = parseInt(document.getElementById('empUnidades').value, 10) || null;
       const blocos = parseInt(document.getElementById('empBlocos').value, 10) || null;
+      const indiceCorrecao = document.getElementById('empIndiceCorrecao').value || 'INCC';
+      const regrasComerciais = document.getElementById('empRegrasComerciais').value.trim();
 
       if (!nome) return aviso('Informe o nome do empreendimento.');
       if (!status) return aviso('Selecione o status do empreendimento.');
@@ -574,6 +591,8 @@
         previsao_entrega: entrega,
         total_unidades: unidades,
         total_blocos: blocos,
+        indice_correcao: indiceCorrecao,
+        regras_comerciais: regrasComerciais || null,
       };
 
       let resp;
