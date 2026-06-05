@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — GATEONE</title>
   <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .banner-emp{
+      display:flex;align-items:center;gap:14px;
+      background:var(--orange-soft);border:1px solid rgba(255,106,0,.35);
+      border-radius:14px;padding:14px 18px;margin-bottom:18px;
+    }
+    .banner-emp .banner-icon{
+      font-size:1.4rem;color:var(--orange);font-weight:700;line-height:1;flex-shrink:0;
+    }
+    .banner-emp .banner-text{
+      flex:1;font-size:.86rem;color:var(--text);line-height:1.5;
+    }
+    .banner-emp .banner-text strong{display:block;margin-bottom:2px;color:var(--orange-deep)}
+    .banner-emp .btn-sm{padding:8px 14px;font-size:.8rem;white-space:nowrap}
+  </style>
 </head>
 <body>
   <div class="app">
@@ -24,6 +39,16 @@
       </header>
 
       <div id="msgGlobal" class="msg"></div>
+
+      <!-- Banner: sem empreendimento cadastrado -->
+      <div id="bannerSemEmp" class="banner-emp" style="display:none">
+        <div class="banner-icon">⚠</div>
+        <div class="banner-text">
+          <strong>Nenhum empreendimento cadastrado.</strong>
+          O laudo será gerado sem dados do empreendimento. Cadastre um empreendimento para análises completas.
+        </div>
+        <a href="empreendimentos.html" class="btn btn-orange btn-sm">Cadastrar agora →</a>
+      </div>
 
       <!-- LINHA 1 — Métricas -->
       <section class="metric-grid">
@@ -381,6 +406,15 @@
       if (incorporadora.onboarding_completo === false) {
         window.location.replace('onboarding.html');
         return;
+      }
+
+      // Banner: avisa se ainda não cadastrou nenhum empreendimento
+      const { count: empCount } = await supa
+        .from('empreendimentos')
+        .select('id', { count: 'exact', head: true })
+        .eq('incorporadora_id', incorporadora.id);
+      if (!empCount || empCount === 0) {
+        document.getElementById('bannerSemEmp').style.display = 'flex';
       }
 
       const { data, error } = await supa

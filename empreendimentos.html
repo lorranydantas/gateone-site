@@ -154,6 +154,16 @@
             <input id="fBlocos" type="number" min="0" step="1" placeholder="3" />
           </div>
         </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Unidade padrão <span class="opt" style="color:var(--text-muted);font-weight:400;font-size:.7rem">(opcional)</span></label>
+            <input id="fUnidadePadrao" type="text" placeholder="Ex.: Apto 2 quartos / Studio" />
+          </div>
+          <div class="field">
+            <label>Valor do imóvel padrão R$ <span class="opt" style="color:var(--text-muted);font-weight:400;font-size:.7rem">(opcional)</span></label>
+            <input id="fValorImovelPadrao" type="number" min="0" step="1000" placeholder="450000" />
+          </div>
+        </div>
         <div class="field">
           <label>Índice de correção</label>
           <select id="fIndice">
@@ -167,34 +177,21 @@
           <label>Regras comerciais</label>
           <textarea id="fRegras" rows="3" placeholder="Ex.: entrada mínima 20%, parcelas semestrais permitidas, FGTS aceito…"></textarea>
         </div>
+
+        <!-- Seção corretores integrada -->
+        <div id="secaoCorretores" class="field" style="display:none;border-top:1px solid var(--line);padding-top:14px;margin-top:6px">
+          <label>Corretores habilitados</label>
+          <span class="hint" style="margin-bottom:8px">Marque os corretores que terão acesso a este empreendimento no bot.</span>
+          <div id="corretorPickList" class="corretor-pick-list">
+            <p style="padding:12px;text-align:center;color:var(--text-muted);font-size:.82rem">Carregando corretores…</p>
+          </div>
+        </div>
+
         <div id="msgEmp" class="msg"></div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" type="button" onclick="fecharModalEmp()">Cancelar</button>
         <button class="btn btn-orange" type="button" id="btnSalvarEmp">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: gerenciar corretores do empreendimento -->
-  <div class="modal-backdrop" id="modalCorr">
-    <div class="modal">
-      <div class="modal-head">
-        <h2>Gerenciar corretores — <span id="modalCorrNome">…</span></h2>
-        <button class="modal-close" type="button" onclick="fecharModalCorr()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:4px">
-          Marque os corretores que devem ter acesso a este empreendimento.
-        </p>
-        <div id="corretorPickList" class="corretor-pick-list">
-          <p class="empty-state" style="padding:20px">Carregando corretores…</p>
-        </div>
-        <div id="msgCorr" class="msg"></div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" type="button" onclick="fecharModalCorr()">Cancelar</button>
-        <button class="btn btn-orange" type="button" id="btnSalvarCorr">Salvar vínculos</button>
       </div>
     </div>
   </div>
@@ -210,7 +207,7 @@
 
     let incorp = null;
     let empAtualId = null;       // id em edição no modalEmp
-    let corrEmpAtual = null;     // empreendimento atual no modalCorr
+    let corretoresCache = [];    // corretores ativos da incorporadora
 
     const aviso = (el, t, tipo='err') => { el.textContent = t; el.className = `msg ${tipo} show`; };
     const limparMsg = (el) => { el.className = 'msg'; el.textContent = ''; };
@@ -231,10 +228,20 @@
       return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
+    async function carregarCorretores(){
+      const { data } = await supa
+        .from('corretores')
+        .select('id, nome, telefone')
+        .eq('incorporadora_id', incorp.id)
+        .eq('ativo', true)
+        .order('nome', { ascending: true });
+      corretoresCache = data || [];
+    }
+
     async function carregar(){
       const { data, error } = await supa
         .from('empreendimentos')
-        .select('id, nome, status, previsao_entrega, indice_correcao, total_unidades, endereco, total_blocos, regras_comerciais')
+        .select('id, nome, status, previsao_entrega, indice_correcao, total_unidades, endereco, total_blocos, regras_comerciais, unidade_padrao, valor_imovel_padrao')
         .eq('incorporadora_id', incorp.id)
         .order('created_at', { ascending: false });
 
@@ -250,7 +257,20 @@
         return;
       }
 
-      grid.innerHTML = data.map(e => `
+      // contagem de corretores vinculados por empreendimento
+      const ids = data.map(e => e.id);
+      const { data: vinculos } = await supa
+        .from('corretor_empreendimento')
+        .select('empreendimento_id')
+        .in('empreendimento_id', ids);
+      const contagem = new Map();
+      (vinculos || []).forEach(v => {
+        contagem.set(v.empreendimento_id, (contagem.get(v.empreendimento_id) || 0) + 1);
+      });
+
+      grid.innerHTML = data.map(e => {
+        const n = contagem.get(e.id) || 0;
+        return `
         <div class="emp-card">
           <div class="emp-card-head">
             <div class="emp-card-name">${escapeHtml(e.nome)}</div>
@@ -260,23 +280,42 @@
             <div class="emp-row"><span class="k">Entrega</span><span class="v">${fmtData(e.previsao_entrega)}</span></div>
             <div class="emp-row"><span class="k">Índice correção</span><span class="v">${escapeHtml(e.indice_correcao || 'INCC')}</span></div>
             <div class="emp-row"><span class="k">Unidades</span><span class="v">${e.total_unidades ?? '—'}</span></div>
+            <div class="emp-row"><span class="k">Corretores</span><span class="v">${n} ${n === 1 ? 'vinculado' : 'vinculados'}</span></div>
           </div>
           <div class="emp-card-actions">
-            <button class="btn btn-ghost" data-act="edit" data-id="${e.id}">Editar</button>
-            <button class="btn btn-outline" data-act="corr" data-id="${e.id}" data-nome="${escapeHtml(e.nome)}">Corretores</button>
+            <button class="btn btn-outline" data-act="edit" data-id="${e.id}" style="flex:1">Editar &amp; vincular</button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
 
       grid.querySelectorAll('button[data-act="edit"]').forEach(b => {
         b.addEventListener('click', () => abrirEditar(b.dataset.id));
       });
-      grid.querySelectorAll('button[data-act="corr"]').forEach(b => {
-        b.addEventListener('click', () => abrirCorretores(b.dataset.id, b.dataset.nome));
-      });
     }
 
     // ─── Modal empreendimento ─────────────
+    function renderCorretorPick(idsSelecionados = []){
+      const lista = document.getElementById('corretorPickList');
+      const set = new Set(idsSelecionados);
+      if (corretoresCache.length === 0) {
+        lista.innerHTML = `
+          <div style="padding:18px;text-align:center;color:var(--text-muted);font-size:.84rem">
+            Nenhum corretor cadastrado ainda.<br>
+            <a href="corretores.html" style="color:var(--blue);text-decoration:none;font-weight:500">Cadastrar corretores →</a>
+          </div>`;
+        return;
+      }
+      lista.innerHTML = corretoresCache.map(c => `
+        <label class="corretor-pick" data-id="${c.id}">
+          <input type="checkbox" ${set.has(c.id) ? 'checked' : ''} />
+          <div class="info">
+            <div class="nome">${escapeHtml(c.nome)}</div>
+            <div class="tel">${escapeHtml(c.telefone || '')}</div>
+          </div>
+        </label>
+      `).join('');
+    }
+
     function abrirNovo(){
       empAtualId = null;
       document.getElementById('modalEmpTitulo').textContent = 'Novo empreendimento';
@@ -286,8 +325,11 @@
       document.getElementById('fEndereco').value = '';
       document.getElementById('fUnidades').value = '';
       document.getElementById('fBlocos').value = '';
+      document.getElementById('fUnidadePadrao').value = '';
+      document.getElementById('fValorImovelPadrao').value = '';
       document.getElementById('fIndice').value = 'INCC';
       document.getElementById('fRegras').value = '';
+      document.getElementById('secaoCorretores').style.display = 'none';
       limparMsg(document.getElementById('msgEmp'));
       document.getElementById('modalEmp').classList.add('show');
     }
@@ -295,7 +337,7 @@
     async function abrirEditar(id){
       const { data, error } = await supa
         .from('empreendimentos')
-        .select('id, nome, status, previsao_entrega, indice_correcao, total_unidades, total_blocos, endereco, regras_comerciais')
+        .select('id, nome, status, previsao_entrega, indice_correcao, total_unidades, total_blocos, endereco, regras_comerciais, unidade_padrao, valor_imovel_padrao')
         .eq('id', id).maybeSingle();
       if (error || !data) { aviso(msgGlobal, 'Erro ao carregar empreendimento.'); return; }
       empAtualId = id;
@@ -306,8 +348,20 @@
       document.getElementById('fEndereco').value = data.endereco || '';
       document.getElementById('fUnidades').value = data.total_unidades ?? '';
       document.getElementById('fBlocos').value = data.total_blocos ?? '';
+      document.getElementById('fUnidadePadrao').value = data.unidade_padrao || '';
+      document.getElementById('fValorImovelPadrao').value = data.valor_imovel_padrao ?? '';
       document.getElementById('fIndice').value = data.indice_correcao || 'INCC';
       document.getElementById('fRegras').value = data.regras_comerciais || '';
+
+      // Carregar vínculos atuais
+      const { data: vinc } = await supa
+        .from('corretor_empreendimento')
+        .select('corretor_id')
+        .eq('empreendimento_id', id);
+      const idsVinc = (vinc || []).map(v => v.corretor_id);
+      renderCorretorPick(idsVinc);
+      document.getElementById('secaoCorretores').style.display = 'block';
+
       limparMsg(document.getElementById('msgEmp'));
       document.getElementById('modalEmp').classList.add('show');
     }
@@ -332,6 +386,8 @@
         total_blocos: parseInt(document.getElementById('fBlocos').value, 10) || null,
         indice_correcao: document.getElementById('fIndice').value || 'INCC',
         regras_comerciais: document.getElementById('fRegras').value.trim() || null,
+        unidade_padrao: document.getElementById('fUnidadePadrao').value.trim() || null,
+        valor_imovel_padrao: parseFloat(document.getElementById('fValorImovelPadrao').value) || null,
       };
 
       const btn = document.getElementById('btnSalvarEmp');
@@ -341,91 +397,41 @@
         ? await supa.from('empreendimentos').update(payload).eq('id', empAtualId).select('id').single()
         : await supa.from('empreendimentos').insert(payload).select('id').single();
 
-      btn.disabled = false; btn.textContent = 'Salvar';
+      if (resp.error) {
+        btn.disabled = false; btn.textContent = 'Salvar';
+        aviso(msgEl, 'Erro ao salvar: ' + resp.error.message); return;
+      }
 
-      if (resp.error) { aviso(msgEl, 'Erro ao salvar: ' + resp.error.message); return; }
+      const empId = resp.data.id;
+
+      // Sync vínculos corretor↔empreendimento (apenas em edição, quando a seção está visível)
+      if (document.getElementById('secaoCorretores').style.display !== 'none') {
+        const selecionados = Array.from(document.querySelectorAll('#corretorPickList .corretor-pick'))
+          .filter(el => el.querySelector('input').checked)
+          .map(el => el.dataset.id);
+
+        const { error: eDel } = await supa
+          .from('corretor_empreendimento')
+          .delete()
+          .eq('empreendimento_id', empId);
+        if (eDel) {
+          btn.disabled = false; btn.textContent = 'Salvar';
+          aviso(msgEl, 'Erro ao atualizar vínculos: ' + eDel.message); return;
+        }
+
+        if (selecionados.length > 0) {
+          const rows = selecionados.map(cid => ({ corretor_id: cid, empreendimento_id: empId }));
+          const { error: eIns } = await supa.from('corretor_empreendimento').insert(rows);
+          if (eIns) {
+            btn.disabled = false; btn.textContent = 'Salvar';
+            aviso(msgEl, 'Erro ao salvar vínculos: ' + eIns.message); return;
+          }
+        }
+      }
+
+      btn.disabled = false; btn.textContent = 'Salvar';
       fecharModalEmp();
       await carregar();
-    });
-
-    // ─── Modal corretores ─────────────────
-    async function abrirCorretores(empId, empNome){
-      corrEmpAtual = empId;
-      document.getElementById('modalCorrNome').textContent = empNome;
-      limparMsg(document.getElementById('msgCorr'));
-      const lista = document.getElementById('corretorPickList');
-      lista.innerHTML = '<p style="padding:20px;color:var(--text-muted);text-align:center;font-size:.85rem">Carregando…</p>';
-      document.getElementById('modalCorr').classList.add('show');
-
-      // 1. todos os corretores ativos da incorporadora
-      const { data: corretores, error: e1 } = await supa
-        .from('corretores')
-        .select('id, nome, telefone')
-        .eq('incorporadora_id', incorp.id)
-        .eq('ativo', true)
-        .order('nome', { ascending: true });
-      if (e1) { lista.innerHTML = `<p style="padding:20px;color:var(--orange-deep)">Erro: ${e1.message}</p>`; return; }
-
-      // 2. vínculos atuais desse empreendimento
-      const { data: vinculos, error: e2 } = await supa
-        .from('corretor_empreendimento')
-        .select('corretor_id')
-        .eq('empreendimento_id', empId);
-      if (e2) { lista.innerHTML = `<p style="padding:20px;color:var(--orange-deep)">Erro: ${e2.message}</p>`; return; }
-
-      const vinculados = new Set((vinculos || []).map(v => v.corretor_id));
-
-      if (!corretores || corretores.length === 0) {
-        lista.innerHTML = `
-          <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:.86rem">
-            Nenhum corretor cadastrado ainda.<br>
-            <a href="corretores.html" style="color:var(--blue);text-decoration:none;font-weight:500">Cadastrar corretores →</a>
-          </div>`;
-        return;
-      }
-
-      lista.innerHTML = corretores.map(c => `
-        <label class="corretor-pick" data-id="${c.id}">
-          <input type="checkbox" ${vinculados.has(c.id) ? 'checked' : ''} />
-          <div class="info">
-            <div class="nome">${escapeHtml(c.nome)}</div>
-            <div class="tel">${escapeHtml(c.telefone || '')}</div>
-          </div>
-        </label>
-      `).join('');
-    }
-
-    function fecharModalCorr(){ document.getElementById('modalCorr').classList.remove('show'); }
-
-    document.getElementById('btnSalvarCorr').addEventListener('click', async () => {
-      if (!corrEmpAtual) return;
-      const msgEl = document.getElementById('msgCorr');
-      limparMsg(msgEl);
-      const btn = document.getElementById('btnSalvarCorr');
-      btn.disabled = true; btn.textContent = 'Salvando…';
-
-      const selecionados = Array.from(document.querySelectorAll('#corretorPickList .corretor-pick'))
-        .filter(el => el.querySelector('input').checked)
-        .map(el => el.dataset.id);
-
-      // Estratégia: deleta todos e re-insere
-      const { error: eDel } = await supa
-        .from('corretor_empreendimento')
-        .delete()
-        .eq('empreendimento_id', corrEmpAtual);
-      if (eDel) { btn.disabled = false; btn.textContent = 'Salvar vínculos'; aviso(msgEl, 'Erro: ' + eDel.message); return; }
-
-      if (selecionados.length > 0) {
-        const rows = selecionados.map(cid => ({
-          corretor_id: cid,
-          empreendimento_id: corrEmpAtual,
-        }));
-        const { error: eIns } = await supa.from('corretor_empreendimento').insert(rows);
-        if (eIns) { btn.disabled = false; btn.textContent = 'Salvar vínculos'; aviso(msgEl, 'Erro: ' + eIns.message); return; }
-      }
-
-      btn.disabled = false; btn.textContent = 'Salvar vínculos';
-      fecharModalCorr();
     });
 
     // expor para uso inline
@@ -441,6 +447,7 @@
         aviso(msgGlobal, 'Sua conta ainda não está vinculada a uma incorporadora. Fale com o suporte GATEONE.');
         return;
       }
+      await carregarCorretores();
       await carregar();
     })();
   </script>

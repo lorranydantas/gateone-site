@@ -285,6 +285,18 @@
               <input id="empBlocos" type="number" min="0" step="1" placeholder="3" />
             </div>
           </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Unidade padrão <span class="opt">(opcional)</span></label>
+              <input id="empUnidadePadrao" type="text" placeholder="Ex.: Apto 2 quartos / Studio" />
+              <span class="hint">Sugerida pelo bot quando o corretor não informar.</span>
+            </div>
+            <div class="field">
+              <label>Valor do imóvel padrão R$ <span class="opt">(opcional)</span></label>
+              <input id="empValorImovelPadrao" type="number" min="0" step="1000" placeholder="450000" />
+              <span class="hint">Default quando o corretor não informar o valor.</span>
+            </div>
+          </div>
           <div class="field">
             <label>Índice de correção <span class="opt">(opcional)</span></label>
             <select id="empIndiceCorrecao">
@@ -577,6 +589,8 @@
       const blocos = parseInt(document.getElementById('empBlocos').value, 10) || null;
       const indiceCorrecao = document.getElementById('empIndiceCorrecao').value || 'INCC';
       const regrasComerciais = document.getElementById('empRegrasComerciais').value.trim();
+      const unidadePadrao = document.getElementById('empUnidadePadrao').value.trim();
+      const valorImovelPadrao = parseFloat(document.getElementById('empValorImovelPadrao').value) || null;
 
       if (!nome) return aviso('Informe o nome do empreendimento.');
       if (!status) return aviso('Selecione o status do empreendimento.');
@@ -593,6 +607,8 @@
         total_blocos: blocos,
         indice_correcao: indiceCorrecao,
         regras_comerciais: regrasComerciais || null,
+        unidade_padrao: unidadePadrao || null,
+        valor_imovel_padrao: valorImovelPadrao,
       };
 
       let resp;
