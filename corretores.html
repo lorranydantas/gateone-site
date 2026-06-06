@@ -111,7 +111,11 @@
           <h1>Corretores</h1>
           <p>Cadastre e gerencie os corretores que usam o bot da sua incorporadora.</p>
         </div>
-        <button class="btn btn-orange" id="btnNovo">+ Novo corretor</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline" id="btnImportar">⬆ Importar CSV</button>
+          <button class="btn btn-orange" id="btnNovo">+ Novo corretor</button>
+          <input type="file" id="fileImport" accept=".csv,.xls,.xlsx" style="display:none" />
+        </div>
       </div>
 
       <div id="msgGlobal" class="msg"></div>
@@ -194,6 +198,34 @@
     </div>
   </div>
 
+  <!-- Modal: importação CSV/XLSX -->
+  <div class="modal-backdrop" id="modalImport">
+    <div class="modal" style="max-width:760px">
+      <div class="modal-head">
+        <h2>Importar corretores</h2>
+        <button class="modal-close" type="button" onclick="fecharImport()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:6px">
+          Formato esperado das colunas: <strong>nome</strong>, <strong>telefone</strong>, <strong>email</strong> (email opcional).
+          Telefones podem conter formatação — serão normalizados para apenas dígitos.
+        </p>
+        <div id="impPreviewArea">
+          <div style="padding:32px;text-align:center;color:var(--text-muted);font-size:.86rem;border:1px dashed var(--line-strong);border-radius:12px">
+            Selecione um arquivo <strong>.csv</strong>, <strong>.xls</strong> ou <strong>.xlsx</strong> para começar.
+          </div>
+        </div>
+        <div id="msgImport" class="msg"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" type="button" onclick="fecharImport()">Cancelar</button>
+        <button class="btn btn-orange" type="button" id="btnConfirmarImport" disabled>Confirmar importação</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="sidebar.js"></script>
@@ -385,6 +417,167 @@
     document.getElementById('filtroEmp').addEventListener('change', e => {
       filtroAtual = e.target.value;
       carregar();
+    });
+
+    // ─── Importação CSV/XLSX ──────────────────
+    let registrosImport = [];
+
+    const fecharImport = () => document.getElementById('modalImport').classList.remove('show');
+    window.fecharImport = fecharImport;
+
+    document.getElementById('btnImportar').addEventListener('click', () => {
+      registrosImport = [];
+      document.getElementById('btnConfirmarImport').disabled = true;
+      document.getElementById('impPreviewArea').innerHTML = `
+        <div style="padding:32px;text-align:center;color:var(--text-muted);font-size:.86rem;border:1px dashed var(--line-strong);border-radius:12px">
+          Selecione um arquivo <strong>.csv</strong>, <strong>.xls</strong> ou <strong>.xlsx</strong> para começar.
+        </div>`;
+      limparMsg(document.getElementById('msgImport'));
+      document.getElementById('modalImport').classList.add('show');
+      document.getElementById('fileImport').value = '';
+      document.getElementById('fileImport').click();
+    });
+
+    document.getElementById('fileImport').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      try {
+        let rows = [];
+        if (ext === 'csv') {
+          const txt = await file.text();
+          const parsed = Papa.parse(txt, { header: true, skipEmptyLines: true });
+          rows = parsed.data;
+        } else if (ext === 'xls' || ext === 'xlsx') {
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        } else {
+          aviso(document.getElementById('msgImport'), 'Formato não suportado. Use .csv, .xls ou .xlsx.');
+          return;
+        }
+        prepararPreview(rows);
+      } catch (err) {
+        aviso(document.getElementById('msgImport'), 'Erro ao ler arquivo: ' + err.message);
+      }
+    });
+
+    function lowerKeys(o) {
+      const out = {};
+      for (const k in o) out[k.trim().toLowerCase()] = o[k];
+      return out;
+    }
+
+    function prepararPreview(linhas) {
+      const validos = [];
+      const erros = [];
+      linhas.forEach((raw, i) => {
+        const r = lowerKeys(raw);
+        const nome = String(r.nome || '').trim();
+        const tel = onlyDigits(r.telefone || '');
+        const email = String(r.email || '').trim() || null;
+        if (!nome) { erros.push({ linha: i + 2, motivo: 'nome vazio' }); return; }
+        if (tel.length < 10 || tel.length > 13) { erros.push({ linha: i + 2, motivo: `telefone inválido (${r.telefone || 'vazio'})` }); return; }
+        validos.push({ nome, telefone: tel, email });
+      });
+
+      registrosImport = validos;
+      const area = document.getElementById('impPreviewArea');
+
+      if (validos.length === 0 && erros.length === 0) {
+        area.innerHTML = `<p style="padding:16px;color:var(--orange-deep)">Nenhuma linha encontrada no arquivo.</p>`;
+        document.getElementById('btnConfirmarImport').disabled = true;
+        return;
+      }
+
+      const preview = validos.slice(0, 50).map(r => `
+        <tr>
+          <td>${escapeHtml(r.nome)}</td>
+          <td>${escapeHtml(formatPhone(r.telefone))}</td>
+          <td>${escapeHtml(r.email || '—')}</td>
+        </tr>
+      `).join('');
+
+      area.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+          <div style="font-size:.86rem;color:var(--text);font-weight:500">
+            <strong>${validos.length}</strong> corretor(es) prontos para importar
+            ${erros.length ? `· <span style="color:var(--orange-deep)">${erros.length} ignorados</span>` : ''}
+          </div>
+          ${validos.length > 50 ? `<span style="font-size:.74rem;color:var(--text-muted)">mostrando primeiros 50</span>` : ''}
+        </div>
+        <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:300px;overflow-y:auto">
+          <table class="table" style="font-size:.82rem">
+            <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th></tr></thead>
+            <tbody>${preview}</tbody>
+          </table>
+        </div>
+        ${erros.length ? `
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;font-size:.78rem;color:var(--orange-deep)">Ver ${erros.length} linha(s) ignorada(s)</summary>
+            <ul style="margin-top:8px;padding-left:20px;font-size:.78rem;color:var(--text-muted)">
+              ${erros.slice(0, 30).map(e => `<li>Linha ${e.linha}: ${escapeHtml(e.motivo)}</li>`).join('')}
+              ${erros.length > 30 ? `<li>… e mais ${erros.length - 30}</li>` : ''}
+            </ul>
+          </details>` : ''}
+      `;
+
+      document.getElementById('btnConfirmarImport').disabled = validos.length === 0;
+    }
+
+    document.getElementById('btnConfirmarImport').addEventListener('click', async () => {
+      if (registrosImport.length === 0) return;
+      const msgEl = document.getElementById('msgImport');
+      limparMsg(msgEl);
+      const btn = document.getElementById('btnConfirmarImport');
+      btn.disabled = true; btn.textContent = 'Importando…';
+
+      // Telefones já cadastrados na incorporadora (pra detectar duplicatas localmente)
+      const tels = registrosImport.map(r => r.telefone);
+      const { data: existentes } = await supa
+        .from('corretores')
+        .select('telefone')
+        .in('telefone', tels);
+      const dupSet = new Set((existentes || []).map(c => c.telefone));
+
+      const novos = registrosImport.filter(r => !dupSet.has(r.telefone))
+        .map(r => ({
+          incorporadora_id: incorp.id,
+          nome: r.nome,
+          telefone: r.telefone,
+          email: r.email,
+          ativo: true,
+          onboarding_enviado: false,
+        }));
+
+      const ignoradosDup = registrosImport.length - novos.length;
+      let ok = 0;
+      let falhas = 0;
+
+      if (novos.length > 0) {
+        const { error, count } = await supa
+          .from('corretores')
+          .insert(novos, { count: 'exact' });
+        if (error) {
+          falhas = novos.length;
+          console.error('[IMPORT] erro:', error);
+        } else {
+          ok = count ?? novos.length;
+        }
+      }
+
+      btn.disabled = false; btn.textContent = 'Confirmar importação';
+      const linhas = [
+        `${ok} corretor(es) importado(s)`,
+        ignoradosDup > 0 ? `${ignoradosDup} telefone(s) duplicado(s)` : null,
+        falhas > 0 ? `${falhas} falha(s) no insert` : null,
+      ].filter(Boolean);
+      aviso(msgEl, linhas.join(' · '), falhas > 0 ? 'err' : 'ok');
+
+      if (ok > 0) {
+        setTimeout(() => { fecharImport(); carregar(); }, 1200);
+      }
     });
 
     document.getElementById('btnSalvar').addEventListener('click', async () => {
